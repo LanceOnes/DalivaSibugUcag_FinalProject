@@ -24,12 +24,12 @@ export function HomePage() {
             Premium boneless lechon belly crafted in Lawaan — pre-order only for the perfect roast every time.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/order">
+            <Link to="/menu" className="cursor-pointer">
               <Button variant="gold" size="lg">
                 Pre-Order Now <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/menu">
+            <Link to="/menu" className="cursor-pointer">
               <Button variant="outline" size="lg" className="border-white/40 text-white hover:bg-white/10">
                 View Menu
               </Button>
@@ -55,7 +55,7 @@ export function HomePage() {
             { title: '50% Downpayment', desc: 'Secure your slot with half payment. Balance on pickup or delivery.' },
             { title: 'Pickup & Delivery', desc: 'Collect in Lawaan or enjoy delivery within Roxas City.' },
           ].map((item) => (
-            <div key={item.title} className="card-hover rounded-2xl border border-belly-gold/30 bg-white p-6 text-center shadow-md">
+            <div key={item.title} className="card-hover glass-card p-6 text-center">
               <h3 className="font-display text-lg font-bold text-belly-red">{item.title}</h3>
               <p className="mt-2 text-sm text-belly-brown/70">{item.desc}</p>
             </div>
@@ -63,12 +63,15 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-belly-red py-16 text-center text-white">
-        <h2 className="font-display text-3xl font-bold">Ready for your celebration?</h2>
-        <p className="mt-2 text-white/80">Party trays from ₱4,500 — feeds 20–25 guests</p>
-        <Link to="/order" className="mt-6 inline-block">
-          <Button variant="gold" size="lg">Start Your Order</Button>
-        </Link>
+      <section className="relative overflow-hidden bg-belly-red py-16 text-center text-white">
+        <div className="absolute inset-0 bg-gradient-to-br from-belly-red-dark/50 to-transparent" aria-hidden="true" />
+        <div className="relative">
+          <h2 className="font-display text-3xl font-bold">Ready for your celebration?</h2>
+          <p className="mt-2 text-white/80">Party trays from ₱4,500 — feeds 20–25 guests</p>
+          <Link to="/menu" className="mt-6 inline-block cursor-pointer">
+            <Button variant="gold" size="lg">Browse Menu & Order</Button>
+          </Link>
+        </div>
       </section>
     </>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import { formatPeso } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -15,7 +15,7 @@ export function AdminReportsPage() {
   const [report, setReport] = useState<Report | null>(null)
 
   useEffect(() => {
-    api.get('/admin/reports').then(({ data }) => setReport(data))
+    axiosInstance.get('/admin/reports').then(({ data }) => setReport(data))
   }, [])
 
   if (!report) return <p>Loading reports…</p>

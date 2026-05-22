@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuth } from '@/context/AuthContext'
 
 export function ProtectedRoute({
   children,
@@ -8,8 +8,7 @@ export function ProtectedRoute({
   children: React.ReactNode
   role?: 'customer' | 'admin'
 }) {
-  const user = useAuthStore((s) => s.user)
-  const token = useAuthStore((s) => s.token)
+  const { user, token } = useAuth()
   const location = useLocation()
 
   if (!token && !localStorage.getItem('belly_token')) {

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import type { User } from '@/types'
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
 
   useEffect(() => {
-    api.get('/admin/users', { params: { role: 'customer' } })
+    axiosInstance.get('/admin/users', { params: { role: 'customer' } })
       .then(({ data }) => setUsers(data.data ?? []))
   }, [])
 

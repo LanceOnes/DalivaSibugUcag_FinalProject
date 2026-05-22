@@ -28,7 +28,6 @@ Route::post('/delivery/calculate', [DeliveryController::class, 'calculateFee']);
 Route::get('/delivery/zones', [DeliveryController::class, 'zones']);
 
 Route::post('/orders', [OrderController::class, 'store']);
-Route::post('/orders/track', [OrderController::class, 'track']);
 
 
 Route::middleware('auth:sanctum')->group(function () { // user or customer

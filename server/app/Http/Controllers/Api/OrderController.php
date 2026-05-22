@@ -121,32 +121,6 @@ class OrderController extends Controller
         return response()->json(['order' => $order]);
     }
 
-    public function track(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'order_number' => ['required_without:guest_token', 'string'],
-            'guest_token' => ['required_without:order_number', 'string'],
-        ]);
-
-        $query = Order::with('items', 'timeSlot');
-
-        if (! empty($validated['order_number'])) {
-            $query->where('order_number', $validated['order_number']);
-        }
-
-        if (! empty($validated['guest_token'])) {
-            $query->where('guest_token', $validated['guest_token']);
-        }
-
-        $order = $query->first();
-
-        if (! $order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        return response()->json(['order' => $order]);
-    }
-
     private function resolveLineItem(array $item): array
     {
         if (! empty($item['product_variant_id'])) {

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Mail, MapPin, Phone, ShoppingBag } from 'lucide-react'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 
 export function AccountProfilePage() {
-  const user = useAuthStore((s) => s.user)
+  const { user } = useAuth()
   if (!user) return null
 
   const fields = [
@@ -20,7 +20,7 @@ export function AccountProfilePage() {
         <p className="mt-1 text-sm text-belly-brown/50">Your account details</p>
       </div>
 
-      <div className="divide-y divide-belly-brown/6 overflow-hidden rounded-2xl border border-belly-brown/8 bg-white">
+      <div className="glass-card divide-y divide-belly-brown/6 overflow-hidden">
         {fields.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-start gap-4 px-5 py-4">
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-belly-cream text-belly-brown/60">
@@ -41,8 +41,8 @@ export function AccountProfilePage() {
             <p className="text-sm font-semibold text-belly-brown">Ready to order?</p>
             <p className="text-xs text-belly-brown/60">Pre-order belly for your next celebration</p>
           </div>
-          <Link to="/order">
-            <Button variant="gold" size="sm">Order Now</Button>
+          <Link to="/menu" className="cursor-pointer">
+            <Button variant="gold" size="sm">Browse Menu</Button>
           </Link>
         </div>
       </div>

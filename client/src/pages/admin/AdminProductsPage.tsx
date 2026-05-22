@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import type { Product, ProductVariant } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ export function AdminProductsPage() {
   const [variants, setVariants] = useState<Partial<ProductVariant>[]>([])
   const [deleteIds, setDeleteIds] = useState<number[]>([])
 
-  const load = () => api.get('/admin/products').then(({ data }) => setProducts(data.products))
+  const load = () => axiosInstance.get('/admin/products').then(({ data }) => setProducts(data.products))
 
   useEffect(() => { load() }, [])
 
@@ -24,7 +24,7 @@ export function AdminProductsPage() {
 
   const save = async () => {
     if (!editing) return
-    await api.put(`/admin/products/${editing.id}`, {
+    await axiosInstance.put(`/admin/products/${editing.id}`, {
       name: editing.name,
       description: editing.description,
       category: editing.category,
@@ -45,7 +45,7 @@ export function AdminProductsPage() {
 
   const removeProduct = async (id: number) => {
     if (!confirm('Delete product?')) return
-    await api.delete(`/admin/products/${id}`)
+    await axiosInstance.delete(`/admin/products/${id}`)
     load()
   }
 

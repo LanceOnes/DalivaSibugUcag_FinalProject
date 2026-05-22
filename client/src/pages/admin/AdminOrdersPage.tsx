@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import type { Order, OrderStatus } from '@/types'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { formatPeso } from '@/lib/utils'
@@ -10,14 +10,14 @@ export function AdminOrdersPage() {
   const [filter, setFilter] = useState('')
 
   const load = () => {
-    api.get('/admin/orders', { params: { status: filter || undefined } })
+    axiosInstance.get('/admin/orders', { params: { status: filter || undefined } })
       .then(({ data }) => setOrders(data.data ?? []))
   }
 
   useEffect(() => { load() }, [filter])
 
   const updateStatus = async (id: number, status: OrderStatus) => {
-    await api.patch(`/admin/orders/${id}/status`, { status })
+    await axiosInstance.patch(`/admin/orders/${id}/status`, { status })
     load()
   }
 

@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import type { Order } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { formatPeso } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 
 export function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/orders').then(({ data }) => setOrders(data.data ?? data)).finally(() => setLoading(false))
+    axiosInstance.get('/orders').then(({ data }) => setOrders(data.data ?? data)).finally(() => setLoading(false))
   }, [])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-sm text-belly-brown/50">
-        Loading orders…
+      <div className="flex items-center justify-center gap-3 py-16">
+        <Spinner />
+        <span className="text-sm text-belly-brown/50">Loading orders…</span>
       </div>
     )
   }
@@ -34,14 +36,14 @@ export function OrderHistoryPage() {
       {orders.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-belly-brown/15 bg-white/50 px-6 py-12 text-center">
           <p className="text-sm text-belly-brown/60">You haven&apos;t placed any orders yet.</p>
-          <Link to="/order" className="mt-3 inline-block text-sm font-medium text-belly-red hover:underline">
-            Pre-order now →
+          <Link to="/menu" className="mt-3 inline-block cursor-pointer text-sm font-medium text-belly-red hover:underline">
+            Browse menu →
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
           {orders.map((o) => (
-            <Card key={o.id} className="card-hover">
+            <Card key={o.id} className="card-hover glass-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold">{o.order_number}</CardTitle>
                 <OrderStatusBadge status={o.status} />

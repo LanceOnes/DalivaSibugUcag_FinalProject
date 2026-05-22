@@ -1,7 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Package, ShoppingCart, Calendar, Users, BarChart3, LogOut } from 'lucide-react'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
+import { PageLoader } from './PageLoader'
 
 const nav = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -13,7 +14,7 @@ const nav = [
 ]
 
 export function AdminLayout() {
-  const logout = useAuthStore((s) => s.logout)
+  const { logout } = useAuth()
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -30,8 +31,8 @@ export function AdminLayout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
-                  isActive ? 'bg-belly-gold text-belly-brown' : 'hover:bg-belly-cream/10',
+                  'flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200',
+                  isActive ? 'bg-belly-gold text-belly-brown shadow-sm' : 'hover:bg-belly-cream/10',
                 )
               }
             >
@@ -39,11 +40,16 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <button type="button" onClick={() => logout()} className="flex items-center gap-2 p-4 text-sm text-belly-cream/70 hover:text-white">
+        <button
+          type="button"
+          onClick={() => logout()}
+          className="flex cursor-pointer items-center gap-2 p-4 text-sm text-belly-cream/70 transition-colors hover:text-white"
+        >
           <LogOut className="h-4 w-4" /> Logout
         </button>
       </aside>
-      <main className="flex-1 overflow-auto p-6">
+      <main className="relative flex-1 overflow-auto p-6">
+        <PageLoader />
         <Outlet />
       </main>
     </div>

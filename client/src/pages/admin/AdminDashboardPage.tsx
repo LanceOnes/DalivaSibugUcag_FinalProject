@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import { formatPeso } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
@@ -20,7 +20,7 @@ export function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
 
   useEffect(() => {
-    api.get('/admin/dashboard').then(({ data: d }) => setData(d))
+    axiosInstance.get('/admin/dashboard').then(({ data: d }) => setData(d))
   }, [])
 
   if (!data) return <p>Loading dashboard…</p>

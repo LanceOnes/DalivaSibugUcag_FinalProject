@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { axiosInstance } from '@/lib/axiosInstance'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,13 +25,13 @@ export function AdminSchedulePage() {
     max_orders: 5,
   })
 
-  const load = () => api.get('/admin/time-slots').then(({ data }) => setSlots(data.slots))
+  const load = () => axiosInstance.get('/admin/time-slots').then(({ data }) => setSlots(data.slots))
 
   useEffect(() => { load() }, [])
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault()
-    await api.post('/admin/time-slots', form)
+    await axiosInstance.post('/admin/time-slots', form)
     setForm({ ...form, slot_date: '' })
     load()
   }

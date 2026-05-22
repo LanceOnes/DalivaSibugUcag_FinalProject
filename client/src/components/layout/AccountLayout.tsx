@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LogOut, Package, User } from 'lucide-react'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -18,8 +18,7 @@ function initials(name: string) {
 }
 
 export function AccountLayout() {
-  const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -38,7 +37,7 @@ export function AccountLayout() {
 
       <div className="grid gap-8 md:grid-cols-[220px_1fr]">
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-belly-brown/8 bg-white p-5 shadow-sm">
+          <div className="glass-card p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-belly-red/10 text-sm font-bold text-belly-red">
                 {initials(user.name)}
@@ -58,7 +57,7 @@ export function AccountLayout() {
                 end={end}
                 className={({ isActive }) =>
                   cn(
-                    'flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 md:justify-start',
+                    'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 md:justify-start',
                     isActive
                       ? 'bg-belly-red text-white shadow-md shadow-belly-red/20'
                       : 'text-belly-brown/70 hover:bg-belly-brown/5 hover:text-belly-brown',
@@ -74,7 +73,7 @@ export function AccountLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-belly-brown/50 transition-colors duration-200 hover:bg-red-50 hover:text-red-600 md:justify-start"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-belly-brown/50 transition-colors duration-200 hover:bg-red-50 hover:text-red-600 md:justify-start"
           >
             <LogOut className="h-4 w-4" />
             Sign out

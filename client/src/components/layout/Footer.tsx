@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Phone, Clock } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export function Footer() {
+  const { user, token } = useAuth()
+  const isCustomerLoggedIn = Boolean(token) && user?.role === 'customer'
+
   return (
     <footer className="mt-auto border-t border-belly-brown/10 bg-belly-brown text-belly-cream">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
@@ -16,10 +20,13 @@ export function Footer() {
         <div>
           <p className="mb-3 font-semibold text-belly-gold">Quick Links</p>
           <ul className="space-y-2 text-sm text-belly-cream/80">
-            <li><Link to="/menu" className="hover:text-belly-gold">Menu</Link></li>
-            <li><Link to="/order" className="hover:text-belly-gold">Order Now</Link></li>
-            <li><Link to="/about" className="hover:text-belly-gold">About Us</Link></li>
-            <li><Link to="/track" className="hover:text-belly-gold">Track Order</Link></li>
+            <li><Link to="/menu" className="cursor-pointer transition-colors hover:text-belly-gold">Menu</Link></li>
+            <li><Link to="/cart" className="cursor-pointer transition-colors hover:text-belly-gold">Cart</Link></li>
+            {isCustomerLoggedIn ? (
+              <li><Link to="/account" className="cursor-pointer transition-colors hover:text-belly-gold">My Account</Link></li>
+            ) : (
+              <li><Link to="/login" className="cursor-pointer transition-colors hover:text-belly-gold">Login</Link></li>
+            )}
           </ul>
         </div>
         <div className="space-y-3 text-sm text-belly-cream/80">
