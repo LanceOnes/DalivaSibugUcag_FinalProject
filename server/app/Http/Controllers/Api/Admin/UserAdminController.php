@@ -28,7 +28,7 @@ class UserAdminController extends Controller
             });
         }
 
-        return response()->json($query->paginate(15));
+        return response()->json($query->paginate(10));
     }
 
     public function update(Request $request, User $user): JsonResponse

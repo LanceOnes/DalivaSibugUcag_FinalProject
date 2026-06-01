@@ -46,7 +46,7 @@ export function AdminDashboardPage() {
       <Card className="mt-8">
         <CardHeader><CardTitle>Recent Orders</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          {data.recent_orders.map((o) => (
+          {data.recent_orders.slice(0, 10).map((o) => (
             <div key={o.id} className="flex items-center justify-between border-b pb-2 text-sm">
               <span>{o.order_number} — {o.customer_name}</span>
               <OrderStatusBadge status={o.status as OrderStatus} />

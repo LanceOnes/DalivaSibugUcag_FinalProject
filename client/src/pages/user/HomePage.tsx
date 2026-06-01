@@ -64,7 +64,7 @@ export function HomePage() {
       </section>
 
       <section className="relative overflow-hidden bg-belly-red py-16 text-center text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-belly-red-dark/50 to-transparent" aria-hidden="true" />
+        <div className="absolute inset-0 bg-linear-to-br from-belly-red-dark/50 to-transparent" aria-hidden="true" />
         <div className="relative">
           <h2 className="font-display text-3xl font-bold">Ready for your celebration?</h2>
           <p className="mt-2 text-white/80">Party trays from ₱4,500 — feeds 20–25 guests</p>

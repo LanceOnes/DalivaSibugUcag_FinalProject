@@ -16,6 +16,7 @@ interface AuthContextValue {
   user: User | null
   token: string | null
   isLoading: boolean
+  isAuthReady: boolean
   login: (login: string, password: string, role?: 'customer' | 'admin') => Promise<void>
   register: (data: {
     name: string
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(stored.user)
   const [token, setToken] = useState<string | null>(stored.token)
   const [isLoading, setIsLoading] = useState(false)
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
   const setAuth = useCallback((nextUser: User, nextToken: string) => {
     setUser(nextUser)
@@ -114,9 +116,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth(data.user, t)
   }, [token, setAuth])
 
+  useEffect(() => {
+    const t = token || localStorage.getItem('belly_token')
+    if (!t) {
+      setIsAuthReady(true)
+      return
+    }
+
+    let active = true
+    const loadUser = async () => {
+      setIsLoading(true)
+      try {
+        const { data } = await axiosInstance.get('/me')
+        if (!active) return
+        setAuth(data.user, t)
+      } catch {
+        if (!active) return
+        clearAuth()
+      } finally {
+        if (!active) return
+        setIsLoading(false)
+        setIsAuthReady(true)
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      active = false
+    }
+  }, [token, setAuth, clearAuth])
+
   const value = useMemo(
-    () => ({ user, token, isLoading, login, register, logout, fetchMe }),
-    [user, token, isLoading, login, register, logout, fetchMe],
+    () => ({ user, token, isLoading, isAuthReady, login, register, logout, fetchMe }),
+    [user, token, isLoading, isAuthReady, login, register, logout, fetchMe],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

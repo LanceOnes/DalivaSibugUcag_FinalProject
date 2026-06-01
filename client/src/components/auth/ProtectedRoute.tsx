@@ -8,7 +8,7 @@ export function ProtectedRoute({
   children: React.ReactNode
   role?: 'customer' | 'admin'
 }) {
-  const { user, token } = useAuth()
+  const { user, token, isAuthReady } = useAuth()
   const location = useLocation()
 
   if (!token && !localStorage.getItem('belly_token')) {
@@ -16,7 +16,16 @@ export function ProtectedRoute({
     return <Navigate to={loginPath} state={{ from: location }} replace />
   }
 
-  if (role && user && user.role !== role) {
+  if (!isAuthReady) {
+    return <p className="py-16 text-center text-sm text-belly-brown/60">Loading authentication…</p>
+  }
+
+  if (!user) {
+    const loginPath = role === 'admin' ? '/admin/login' : '/login'
+    return <Navigate to={loginPath} state={{ from: location }} replace />
+  }
+
+  if (role && user.role !== role) {
     return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />
   }
 

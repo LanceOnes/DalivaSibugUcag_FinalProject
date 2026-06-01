@@ -15,6 +15,13 @@ axiosInstance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  const guestToken = localStorage.getItem('belly_guest_token')
+  if (guestToken) {
+    config.headers['X-Guest-Token'] = guestToken
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
   return config
 })
 

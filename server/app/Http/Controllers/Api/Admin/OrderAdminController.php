@@ -30,7 +30,7 @@ class OrderAdminController extends Controller
             });
         }
 
-        return response()->json($query->paginate(15));
+        return response()->json($query->paginate(10));
     }
 
     public function show(Order $order): JsonResponse

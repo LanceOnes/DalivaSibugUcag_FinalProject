@@ -38,10 +38,12 @@ Route::middleware('auth:sanctum')->group(function () { // user or customer
 });
 
 
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () { //admin 
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () { //admin
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::apiResource('products', ProductAdminController::class);
+    Route::post('/products/{product}/image', [ProductAdminController::class, 'uploadImage']);
+    Route::delete('/products/{product}/image', [ProductAdminController::class, 'deleteImage']);
     Route::get('/orders', [OrderAdminController::class, 'index']);
     Route::get('/orders/{order}', [OrderAdminController::class, 'show']);
     Route::patch('/orders/{order}/status', [OrderAdminController::class, 'updateStatus']);

@@ -84,6 +84,9 @@ export function CheckoutPage() {
         })),
       }
       const { data } = await axiosInstance.post('/orders', payload)
+      if (data.guest_token) {
+        localStorage.setItem('belly_guest_token', data.guest_token)
+      }
       clearCart()
       toast.success(
         'Pre-order placed!',
@@ -137,11 +140,10 @@ export function CheckoutPage() {
                       key={t}
                       type="button"
                       onClick={() => setFulfillment(t)}
-                      className={`flex-1 cursor-pointer rounded-xl border-2 py-3 text-sm font-semibold capitalize transition-all duration-200 ${
-                        fulfillment === t
+                      className={`flex-1 cursor-pointer rounded-xl border-2 py-3 text-sm font-semibold capitalize transition-all duration-200 ${fulfillment === t
                           ? 'border-belly-gold bg-belly-gold/10 text-belly-brown shadow-sm'
                           : 'border-belly-brown/20 hover:border-belly-gold/40'
-                      }`}
+                        }`}
                     >
                       {t}
                     </button>

@@ -1,7 +1,6 @@
 import type { CartItem } from '@/types'
 import type { User } from '@/types'
 
-/** Normalize cart data (handles legacy Zustand persist shape). */
 export function loadCartItems(): CartItem[] {
   try {
     const raw = localStorage.getItem('belly-cart')
@@ -75,7 +74,6 @@ export function loadAuth(): { user: User | null; token: string | null } {
     try {
       return { user: JSON.parse(userRaw) as User, token }
     } catch {
-      /* fall through */
     }
   }
 

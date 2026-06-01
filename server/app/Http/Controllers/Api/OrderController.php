@@ -102,8 +102,16 @@ class OrderController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $guestToken = $request->header('X-Guest-Token');
+
         $orders = Order::with('items')
-            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($request, $guestToken) {
+                $query->where('user_id', $request->user()->id);
+
+                if (! empty($guestToken)) {
+                    $query->orWhere('guest_token', $guestToken);
+                }
+            })
             ->latest()
             ->paginate(10);
 

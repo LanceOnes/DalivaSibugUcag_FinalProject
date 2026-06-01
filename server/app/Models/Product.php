@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    protected $appends = ['product_picture_url'];
+
     protected $fillable = [
+        'product_picture',
         'name',
         'slug',
         'description',
@@ -34,5 +37,22 @@ class Product extends Model
     public function activeVariants(): HasMany
     {
         return $this->variants()->where('is_active', true);
+    }
+
+    public function getProductPictureUrlAttribute(): ?string
+    {
+        if (! $this->product_picture) {
+            return null;
+        }
+
+        if (str_starts_with($this->product_picture, 'http://') || str_starts_with($this->product_picture, 'https://')) {
+            return $this->product_picture;
+        }
+
+        $path = str_starts_with($this->product_picture, 'products/')
+            ? $this->product_picture
+            : ltrim($this->product_picture, '/');
+
+        return asset('storage/'.$path);
     }
 }

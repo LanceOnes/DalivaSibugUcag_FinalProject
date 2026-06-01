@@ -31,7 +31,7 @@ class DashboardController extends Controller
 
         $recentOrders = Order::with('items')
             ->latest()
-            ->limit(8)
+            ->limit(10)
             ->get();
 
         $totalCustomers = User::where('role', 'customer')->count();

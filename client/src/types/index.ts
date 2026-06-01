@@ -25,6 +25,8 @@ export interface Product {
   slug: string
   description: string | null
   image: string | null
+  product_picture: string | null
+  product_picture_url?: string | null
   category: 'belly' | 'addon' | 'drink'
   price: string | number | null
   is_active: boolean

@@ -13,12 +13,17 @@ interface Report {
 
 export function AdminReportsPage() {
   const [report, setReport] = useState<Report | null>(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     axiosInstance.get('/admin/reports').then(({ data }) => setReport(data))
   }, [])
 
   if (!report) return <p>Loading reports…</p>
+
+  const itemsPerPage = 10
+  const pagedProducts = report.top_products.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+  const pageCount = Math.max(1, Math.ceil(report.top_products.length / itemsPerPage))
 
   return (
     <div>
@@ -35,13 +40,30 @@ export function AdminReportsPage() {
         <CardHeader><CardTitle>Top Products</CardTitle></CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
-            {report.top_products.map((p, i) => (
+            {pagedProducts.map((p, i) => (
               <li key={i} className="flex justify-between">
                 <span>{p.item_name} {p.size_label}</span>
                 <span>{p.qty} sold · {formatPeso(Number(p.revenue))}</span>
               </li>
             ))}
           </ul>
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <span>Page {page} of {pageCount}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                className="rounded border px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+              >Previous</button>
+              <button
+                type="button"
+                disabled={page >= pageCount}
+                className="rounded border px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
+              >Next</button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

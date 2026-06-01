@@ -17,6 +17,7 @@ interface Slot {
 
 export function AdminSchedulePage() {
   const [slots, setSlots] = useState<Slot[]>([])
+  const [page, setPage] = useState(1)
   const [form, setForm] = useState({
     slot_date: '',
     start_time: '09:00',
@@ -57,7 +58,7 @@ export function AdminSchedulePage() {
             <th className="p-3 text-left">Date</th><th className="p-3 text-left">Time</th><th className="p-3">Type</th><th className="p-3">Booked</th>
           </tr></thead>
           <tbody>
-            {slots.map((s) => (
+            {slots.slice((page - 1) * 10, page * 10).map((s) => (
               <tr key={s.id} className="border-t">
                 <td className="p-3">{s.slot_date}</td>
                 <td className="p-3">{String(s.start_time).slice(0, 5)} – {String(s.end_time).slice(0, 5)}</td>
@@ -67,6 +68,23 @@ export function AdminSchedulePage() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+        <span>Showing {Math.min(slots.length, (page - 1) * 10 + 1)}–{Math.min(slots.length, page * 10)} of {slots.length}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 1}
+            className="rounded border px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+          >Previous</button>
+          <button
+            type="button"
+            disabled={page >= Math.ceil(slots.length / 10)}
+            className="rounded border px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() => setPage((value) => Math.min(Math.ceil(slots.length / 10), value + 1))}
+          >Next</button>
+        </div>
       </div>
     </div>
   )

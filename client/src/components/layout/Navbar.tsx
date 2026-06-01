@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
+import shopLogo from '@/assets/img/shoplogo.png'
 
 const links = [
-  { to: '/', label: 'Home' },
-  { to: '/menu', label: 'Menu' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/menu', label: 'Menu', end: false },
 ]
 
 export function Navbar() {
@@ -19,11 +20,14 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-belly-brown/10 bg-belly-cream/95 backdrop-blur-md shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex cursor-pointer items-center gap-2 transition-opacity duration-200 hover:opacity-80">
-          <span className="font-display text-xl font-bold text-belly-red">
-            BELLY<span className="text-belly-gold">licious</span>
-          </span>
-          <span className="hidden text-xs text-belly-brown/60 sm:inline">Lawaan</span>
+        <Link to="/" className="flex shrink-0 cursor-pointer items-center transition-opacity duration-200 hover:opacity-80">
+          <img
+            src={shopLogo}
+            alt="BELLYlicious Lawaan"
+            className="h-7 w-auto object-contain sm:h-8"
+            width={160}
+            height={32}
+          />
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -31,6 +35,7 @@ export function Navbar() {
             <NavLink
               key={l.to}
               to={l.to}
+              end={l.end}
               className={({ isActive }) =>
                 cn(
                   'cursor-pointer text-sm font-medium transition-colors hover:text-belly-red',

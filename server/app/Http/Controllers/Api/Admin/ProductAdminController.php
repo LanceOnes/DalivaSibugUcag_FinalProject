@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductAdminController extends Controller
@@ -100,9 +101,51 @@ class ProductAdminController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
+        $this->deleteStoredPicture($product->product_picture);
         $product->variants()->delete();
         $product->delete();
 
         return response()->json(['message' => 'Product deleted']);
+    }
+
+    public function uploadImage(Request $request, Product $product): JsonResponse
+    {
+        if ($product->category !== 'addon') {
+            return response()->json(['message' => 'Pictures can only be uploaded for add-on products.'], 422);
+        }
+
+        $validated = $request->validate([
+            'product_picture' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+        ]);
+
+        $this->deleteStoredPicture($product->product_picture);
+
+        $path = $validated['product_picture']->store('products', 'public');
+        $product->update(['product_picture' => $path]);
+
+        return response()->json(['product' => $product->fresh()->load('variants')]);
+    }
+
+    public function deleteImage(Product $product): JsonResponse
+    {
+        if ($product->category !== 'addon') {
+            return response()->json(['message' => 'Pictures can only be removed from add-on products.'], 422);
+        }
+
+        $this->deleteStoredPicture($product->product_picture);
+        $product->update(['product_picture' => null]);
+
+        return response()->json(['product' => $product->fresh()->load('variants')]);
+    }
+
+    private function deleteStoredPicture(?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        if (str_starts_with($path, 'products/') && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }
