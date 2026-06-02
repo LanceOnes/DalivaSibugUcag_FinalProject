@@ -25,8 +25,6 @@ class Order extends Model
         'scheduled_time',
         'subtotal',
         'total',
-        'downpayment_amount',
-        'downpayment_paid',
         'status',
         'notes',
     ];
@@ -38,8 +36,6 @@ class Order extends Model
             'delivery_fee' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
-            'downpayment_amount' => 'decimal:2',
-            'downpayment_paid' => 'boolean',
         ];
     }
 

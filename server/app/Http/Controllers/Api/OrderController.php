@@ -50,7 +50,6 @@ class OrderController extends Controller
                 : 0;
 
             $total = $subtotal + $deliveryFee;
-            $downpayment = round($total * 0.5, 2);
 
             if (! empty($validated['time_slot_id'])) {
                 $slot = TimeSlot::lockForUpdate()->findOrFail($validated['time_slot_id']);
@@ -78,7 +77,6 @@ class OrderController extends Controller
                 'scheduled_time' => $validated['scheduled_time'] ?? null,
                 'subtotal' => $subtotal,
                 'total' => $total,
-                'downpayment_amount' => $downpayment,
                 'notes' => $validated['notes'] ?? null,
                 'status' => 'pending',
             ]);
@@ -95,7 +93,7 @@ class OrderController extends Controller
             return response()->json([
                 'order' => $order,
                 'guest_token' => $guestToken,
-                'message' => 'Order placed! 50% downpayment (₱'.number_format($downpayment, 2).') required to confirm.',
+                'message' => 'Order placed! We will confirm the schedule shortly.',
             ], 201);
         });
     }

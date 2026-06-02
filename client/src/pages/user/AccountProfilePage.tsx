@@ -39,7 +39,7 @@ export function AccountProfilePage() {
           <ShoppingBag className="h-5 w-5 text-belly-gold" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-belly-brown">Ready to order?</p>
-            <p className="text-xs text-belly-brown/60">Pre-order belly for your next celebration</p>
+            <p className="text-xs text-belly-brown/60">Choose your belly for the next celebration.</p>
           </div>
           <Link to="/menu" className="cursor-pointer">
             <Button variant="gold" size="sm">Browse Menu</Button>

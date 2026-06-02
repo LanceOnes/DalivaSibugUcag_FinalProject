@@ -7,6 +7,41 @@ import { EditProducts } from '@/pages/admin/components/EditProducts'
 
 const statuses: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'delivered', 'cancelled']
 
+function formatSlotLabel(label: string | null) {
+  if (!label) {
+    return ''
+  }
+
+  const toStandardTime = (timeValue: string) => {
+    const [hours, minutes] = timeValue.trim().split(':').map(Number)
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return timeValue.trim()
+    }
+
+    const period = hours >= 12 ? 'PM' : 'AM'
+    const hour12 = hours % 12 || 12
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`
+  }
+
+  return label.split('-').map((part) => toStandardTime(part)).join(' - ')
+}
+
+function formatScheduledDate(dateString: string, timeLabel: string | null) {
+  const date = new Date(dateString)
+  const formattedDate = new Intl.DateTimeFormat('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+
+  if (!timeLabel) {
+    return formattedDate
+  }
+
+  return `${formattedDate} · ${formatSlotLabel(timeLabel)}`
+}
+
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [filter, setFilter] = useState('')
@@ -58,7 +93,7 @@ export function AdminOrdersPage() {
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer</th>
-              <th className="p-3">Date</th>
+              <th className="p-3">Scheduled</th>
               <th className="p-3">Total</th>
               <th className="p-3">Status</th>
               <th className="p-3">Actions</th>
@@ -69,7 +104,7 @@ export function AdminOrdersPage() {
               <tr key={o.id} className="border-t">
                 <td className="p-3 font-mono text-xs">{o.order_number}</td>
                 <td className="p-3">{o.customer_name}<br /><span className="text-gray-400">{o.phone}</span></td>
-                <td className="p-3">{o.scheduled_date}</td>
+                <td className="p-3">{formatScheduledDate(o.scheduled_date, o.scheduled_time)}</td>
                 <td className="p-3">{formatPeso(Number(o.total))}</td>
                 <td className="p-3"><OrderStatusBadge status={o.status} /></td>
                 <td className="p-3">

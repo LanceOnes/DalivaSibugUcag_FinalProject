@@ -7,6 +7,45 @@ import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { formatPeso } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 
+function formatTime12Hour(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return time
+  }
+
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const hour12 = hours % 12 || 12
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+function formatSlotLabel(label: string | null) {
+  if (!label) {
+    return ''
+  }
+
+  return label
+    .split('-')
+    .map((part) => formatTime12Hour(part.trim()))
+    .join(' - ')
+}
+
+function formatScheduledLabel(dateString: string, timeLabel: string | null) {
+  const date = new Date(dateString)
+  const formattedDate = new Intl.DateTimeFormat('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+
+  if (!timeLabel) {
+    return formattedDate
+  }
+
+  const formattedTime = formatSlotLabel(timeLabel)
+  return `${formattedDate} · ${formattedTime}`
+}
+
 export function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +114,7 @@ export function OrderHistoryPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex flex-col gap-2 text-belly-brown/70">
-                <p>Scheduled: {currentOrder.scheduled_date}</p>
+                <p>Scheduled: {formatScheduledLabel(currentOrder.scheduled_date, currentOrder.scheduled_time)}</p>
                 <p>Type: {currentOrder.fulfillment_type}</p>
                 <p>Total: <span className="font-semibold text-belly-red">{formatPeso(Number(currentOrder.total))}</span></p>
               </div>
@@ -95,7 +134,7 @@ export function OrderHistoryPage() {
               </CardHeader>
               <CardContent className="flex items-end justify-between text-sm">
                 <div className="text-belly-brown/70">
-                  <p>{o.scheduled_date}</p>
+                  <p>{formatScheduledLabel(o.scheduled_date, o.scheduled_time)}</p>
                   <p className="capitalize">{o.fulfillment_type}</p>
                 </div>
                 <p className="font-bold text-belly-red">{formatPeso(Number(o.total))}</p>

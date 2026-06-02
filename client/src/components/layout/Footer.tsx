@@ -14,7 +14,7 @@ export function Footer() {
             BELLY<span className="text-belly-gold">licious</span>
           </p>
           <p className="mt-2 text-sm text-belly-cream/70">
-            Premium boneless lechon belly — pre-orders only. Crispy, tender, unforgettable.
+            Premium boneless lechon belly — crispy, tender, unforgettable.
           </p>
         </div>
         <div>

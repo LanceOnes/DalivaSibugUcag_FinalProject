@@ -44,7 +44,6 @@ class OrderAdminController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:pending,confirmed,preparing,ready_for_pickup,delivered,cancelled'],
-            'downpayment_paid' => ['sometimes', 'boolean'],
         ]);
 
         $order->update($validated);

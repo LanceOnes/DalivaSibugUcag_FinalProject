@@ -15,6 +15,27 @@ interface Slot {
   is_active: boolean
 }
 
+function formatTime12Hour(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return time
+  }
+
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const hour12 = hours % 12 || 12
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+function formatDateLabel(dateValue: string) {
+  const date = new Date(dateValue)
+  return new Intl.DateTimeFormat('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}
+
 export function AdminSchedulePage() {
   const [slots, setSlots] = useState<Slot[]>([])
   const [page, setPage] = useState(1)
@@ -60,8 +81,8 @@ export function AdminSchedulePage() {
           <tbody>
             {slots.slice((page - 1) * 10, page * 10).map((s) => (
               <tr key={s.id} className="border-t">
-                <td className="p-3">{s.slot_date}</td>
-                <td className="p-3">{String(s.start_time).slice(0, 5)} – {String(s.end_time).slice(0, 5)}</td>
+                <td className="p-3">{formatDateLabel(s.slot_date)}</td>
+                <td className="p-3">{formatTime12Hour(s.start_time)} – {formatTime12Hour(s.end_time)}</td>
                 <td className="p-3 capitalize">{s.type}</td>
                 <td className="p-3 text-center">{s.booked_count}/{s.max_orders}</td>
               </tr>

@@ -21,12 +21,12 @@ export function HomePage() {
             Crispy. Tender. <span className="text-gradient-gold">BELLYlicious.</span>
           </h1>
           <p className="mt-4 max-w-xl text-lg text-white/85">
-            Premium boneless lechon belly crafted in Lawaan — pre-order only for the perfect roast every time.
+            Premium boneless lechon belly crafted in Lawaan for the perfect roast every time.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link to="/menu" className="cursor-pointer">
               <Button variant="gold" size="lg">
-                Pre-Order Now <ArrowRight className="h-4 w-4" />
+                Order Now <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link to="/menu" className="cursor-pointer">
@@ -51,8 +51,7 @@ export function HomePage() {
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {[
-            { title: 'Pre-Order Only', desc: 'Advanced orders ensure peak freshness. Book 1–2 days ahead.' },
-            { title: '50% Downpayment', desc: 'Secure your slot with half payment. Balance on pickup or delivery.' },
+            { title: 'Made to Order', desc: 'Freshly roasted for every order. Book 1–2 days ahead.' },
             { title: 'Pickup & Delivery', desc: 'Collect in Lawaan or enjoy delivery within Roxas City.' },
           ].map((item) => (
             <div key={item.title} className="card-hover glass-card p-6 text-center">

@@ -36,7 +36,6 @@ export function CheckoutPage() {
   const minDate = format(addDays(new Date(), 1), 'yyyy-MM-dd')
   const cartSubtotal = subtotal()
   const total = cartSubtotal + (fulfillment === 'delivery' ? deliveryFee : 0)
-  const downpayment = total * 0.5
 
   useEffect(() => {
     if (items.length === 0) navigate('/cart')
@@ -89,8 +88,8 @@ export function CheckoutPage() {
       }
       clearCart()
       toast.success(
-        'Pre-order placed!',
-        `Order ${data.order.order_number} received. 50% downpayment: ${formatPeso(Number(data.order.downpayment_amount))}`,
+        'Order placed!',
+        `Order ${data.order.order_number} received. We will follow up with your schedule details.`,
       )
       navigate(`/order-success/${data.order.order_number}`, {
         state: { order: data.order },
@@ -141,8 +140,8 @@ export function CheckoutPage() {
                       type="button"
                       onClick={() => setFulfillment(t)}
                       className={`flex-1 cursor-pointer rounded-xl border-2 py-3 text-sm font-semibold capitalize transition-all duration-200 ${fulfillment === t
-                          ? 'border-belly-gold bg-belly-gold/10 text-belly-brown shadow-sm'
-                          : 'border-belly-brown/20 hover:border-belly-gold/40'
+                        ? 'border-belly-gold bg-belly-gold/10 text-belly-brown shadow-sm'
+                        : 'border-belly-brown/20 hover:border-belly-gold/40'
                         }`}
                     >
                       {t}
@@ -211,9 +210,6 @@ export function CheckoutPage() {
                 <div className="flex justify-between"><span>Delivery</span><span>{formatPeso(deliveryFee)}</span></div>
               )}
               <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-belly-red">{formatPeso(total)}</span></div>
-              <div className="rounded-xl bg-belly-gold/15 p-3 text-sm">
-                <strong>50% Downpayment:</strong> {formatPeso(downpayment)} required to confirm your pre-order.
-              </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" variant="gold" className="w-full" disabled={loading || !slotId}>
                 {loading ? (
@@ -222,7 +218,7 @@ export function CheckoutPage() {
                     Placing Order…
                   </span>
                 ) : (
-                  'Place Pre-Order'
+                  'Place Order'
                 )}
               </Button>
             </CardContent>

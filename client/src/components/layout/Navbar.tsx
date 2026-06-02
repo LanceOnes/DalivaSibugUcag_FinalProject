@@ -73,10 +73,6 @@ export function Navbar() {
             </Link>
           )}
 
-          <Link to="/menu" className="hidden cursor-pointer sm:block">
-            <Button variant="gold" size="sm">Pre-Order</Button>
-          </Link>
-
           <Button
             variant="ghost"
             size="icon"
@@ -100,9 +96,6 @@ export function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link to="/menu" className="block cursor-pointer py-2 text-sm font-medium text-belly-gold" onClick={() => setOpen(false)}>
-            Pre-Order
-          </Link>
           <Link to="/login" className="block cursor-pointer py-2 text-sm" onClick={() => setOpen(false)}>Login</Link>
         </nav>
       )}

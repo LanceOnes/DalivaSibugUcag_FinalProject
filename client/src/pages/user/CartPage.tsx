@@ -51,7 +51,7 @@ export function CartPage() {
           <span>Subtotal</span>
           <span className="text-belly-red">{formatPeso(subtotal())}</span>
         </div>
-        <p className="mt-2 text-xs text-belly-brown/60">50% downpayment required at checkout. Delivery fee calculated separately.</p>
+        <p className="mt-2 text-xs text-belly-brown/60">Delivery fee is calculated separately at checkout.</p>
         <Link to="/checkout" className="mt-4 block cursor-pointer">
           <Button variant="gold" className="w-full" size="lg">Proceed to Checkout</Button>
         </Link>

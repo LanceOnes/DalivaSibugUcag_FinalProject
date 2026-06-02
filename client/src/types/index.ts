@@ -89,8 +89,6 @@ export interface Order {
   scheduled_time: string | null
   subtotal: string | number
   total: string | number
-  downpayment_amount: string | number
-  downpayment_paid: boolean
   status: OrderStatus
   notes: string | null
   guest_token?: string | null

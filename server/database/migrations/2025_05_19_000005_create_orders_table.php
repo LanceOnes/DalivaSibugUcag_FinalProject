@@ -25,8 +25,6 @@ return new class extends Migration
             $table->string('scheduled_time')->nullable();
             $table->decimal('subtotal', 10, 2);
             $table->decimal('total', 10, 2);
-            $table->decimal('downpayment_amount', 10, 2);
-            $table->boolean('downpayment_paid')->default(false);
             $table->enum('status', [
                 'pending',
                 'confirmed',
