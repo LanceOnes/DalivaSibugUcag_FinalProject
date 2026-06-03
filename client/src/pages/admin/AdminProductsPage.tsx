@@ -10,7 +10,7 @@ import { Plus, Trash2 } from 'lucide-react'
 
 export function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
-  const [editing, setEditing] = useState<Product | null>(null)
+  const [editing, setEditing] = useState<Partial<Product> | null>(null)
   const [variants, setVariants] = useState<Partial<ProductVariant>[]>([])
   const [deleteIds, setDeleteIds] = useState<number[]>([])
   const [addProductPicture, setAddProductPicture] = useState<File | null>(null)
@@ -33,6 +33,20 @@ export function AdminProductsPage() {
     setVariants([])
   }
 
+  const startCreate = (category: Product['category']) => {
+    setEditing({
+      name: '',
+      description: '',
+      category,
+      price: 0,
+      is_active: true,
+      sort_order: products.length,
+    })
+    setVariants([])
+    setDeleteIds([])
+    setAddProductPicture(null)
+  }
+
   const startEdit = (p: Product) => {
     setEditing({ ...p })
     setVariants(p.variants ?? [])
@@ -41,7 +55,7 @@ export function AdminProductsPage() {
   }
 
   const removeExistingPicture = async () => {
-    if (!editing || editing.category !== 'addon') return
+    if (!editing || editing.category === 'belly' || !editing.id) return
     await axiosInstance.delete(`/admin/products/${editing.id}/image`)
     setEditing({ ...editing, product_picture: null, product_picture_url: null })
     toast.success('Image removed')
@@ -59,27 +73,38 @@ export function AdminProductsPage() {
     if (!editing) return
     setSaving(true)
     try {
-      await axiosInstance.put(`/admin/products/${editing.id}`, {
+      const payload = {
         name: editing.name,
         description: editing.description,
         category: editing.category,
-        price: editing.price,
+        price: editing.category === 'belly' ? editing.price || null : editing.price,
         is_active: editing.is_active,
+        sort_order: editing.sort_order,
         variants:
           editing.category === 'belly'
             ? variants.map((v) => ({
-                id: v.id,
-                size_label: v.size_label,
-                servings: v.servings,
-                price: v.price,
-                is_active: v.is_active ?? true,
-              }))
+              id: v.id,
+              size_label: v.size_label,
+              servings: v.servings,
+              price: v.price,
+              is_active: v.is_active ?? true,
+            }))
             : [],
         delete_variant_ids: deleteIds,
-      })
+      }
 
-      if (addProductPicture && editing.category === 'addon') {
-        await uploadPicture(editing.id, addProductPicture)
+      let product: Product
+
+      if (editing.id) {
+        const { data } = await axiosInstance.put(`/admin/products/${editing.id}`, payload)
+        product = data.product
+      } else {
+        const { data } = await axiosInstance.post('/admin/products', payload)
+        product = data.product
+      }
+
+      if (addProductPicture && product.id && product.category !== 'belly') {
+        await uploadPicture(product.id, addProductPicture)
       }
 
       toast.success('Product saved')
@@ -114,8 +139,15 @@ export function AdminProductsPage() {
     <div>
       <h1 className="text-2xl font-bold">Products</h1>
 
-      <h2 className="mt-8 text-lg font-semibold text-gray-800">Add-ons</h2>
-      <p className="text-sm text-gray-500">Edit an add-on to upload a photo (shown on the menu).</p>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Add-ons</h2>
+          <p className="text-sm text-gray-500">Edit an add-on to upload a photo (shown on the menu).</p>
+        </div>
+        <Button size="sm" onClick={() => startCreate('addon')}>
+          Add add-on
+        </Button>
+      </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {addons.map((p) => {
           const img = p.product_picture_url
@@ -147,7 +179,15 @@ export function AdminProductsPage() {
 
       {otherProducts.length > 0 && (
         <>
-          <h2 className="mt-8 text-lg font-semibold text-gray-800">Other products</h2>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">Other products</h2>
+              <p className="text-sm text-gray-500">Manage drinks, belly items, and other menu products.</p>
+            </div>
+            <Button size="sm" onClick={() => startCreate('drink')}>
+              Add product
+            </Button>
+          </div>
           <div className="mt-4 space-y-3">
             {otherProducts.map((p) => (
               <div key={p.id} className="flex items-center justify-between rounded-xl border bg-white p-4">
@@ -192,12 +232,12 @@ export function AdminProductsPage() {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6">
-            <h2 className="text-lg font-bold">Edit {editing.name}</h2>
+            <h2 className="text-lg font-bold">{editing.id ? 'Edit' : 'Add'} {editing.name || 'product'}</h2>
             <div className="mt-4 space-y-3">
               <div>
                 <Label>Name</Label>
                 <Input
-                  value={editing.name}
+                  value={editing.name ?? ''}
                   onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                 />
               </div>
@@ -208,32 +248,51 @@ export function AdminProductsPage() {
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </div>
+              <div>
+                <Label>Category</Label>
+                <select
+                  className="flex h-11 w-full cursor-pointer rounded-xl border border-belly-brown/20 bg-white px-4 text-sm"
+                  value={editing.category ?? 'addon'}
+                  onChange={(e) => setEditing({ ...editing, category: e.target.value as Product['category'] })}
+                >
+                  <option value="addon">Add-on</option>
+                  <option value="drink">Drink</option>
+                  <option value="belly">Boneless Lechon Belly</option>
+                </select>
+              </div>
 
-              {editing.category === 'addon' && (
+              {editing.category !== 'belly' && (
                 <>
                   <div>
                     <Label>Price (₱)</Label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={editing.price ?? ''}
-                      onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })}
+                      onChange={(e) => setEditing({ ...editing, price: Number(e.target.value.replace(/,/g, '')) || 0 })}
+                      onBlur={(e) => {
+                        const num = Number(e.target.value.replace(/,/g, '')) || 0
+                        setEditing({ ...editing, price: num })
+                      }}
+                      placeholder="0.00"
                     />
                   </div>
                   <UploadInput
-                    label="Add-on photo"
+                    label="Product photo"
                     name="product_picture"
                     value={addProductPicture}
                     onChange={setAddProductPicture}
                     existingImageUrl={editing.product_picture_url}
                     onRemoveExistingImageUrl={removeExistingPicture}
                     removeLabel="Remove photo"
-                    previewAlt={editing.name}
+                    previewAlt={editing.name ?? 'product image'}
                   />
                 </>
               )}
 
               {editing.category === 'belly' && (
                 <>
+                  <p className="text-sm text-belly-brown/70">Image upload is not available for boneless lechon belly.</p>
                   <p className="font-medium">Variants</p>
                   {variants.map((v, i) => (
                     <div key={v.id ?? i} className="grid grid-cols-3 gap-2">
@@ -247,12 +306,18 @@ export function AdminProductsPage() {
                         }}
                       />
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         placeholder="Price"
                         value={v.price ?? ''}
                         onChange={(e) => {
                           const nv = [...variants]
-                          nv[i] = { ...nv[i], price: Number(e.target.value) }
+                          nv[i] = { ...nv[i], price: Number(e.target.value.replace(/,/g, '')) || 0 }
+                          setVariants(nv)
+                        }}
+                        onBlur={(e) => {
+                          const nv = [...variants]
+                          nv[i] = { ...nv[i], price: Number(e.target.value.replace(/,/g, '')) || 0 }
                           setVariants(nv)
                         }}
                       />

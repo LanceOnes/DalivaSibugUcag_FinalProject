@@ -110,8 +110,8 @@ class ProductAdminController extends Controller
 
     public function uploadImage(Request $request, Product $product): JsonResponse
     {
-        if ($product->category !== 'addon') {
-            return response()->json(['message' => 'Pictures can only be uploaded for add-on products.'], 422);
+        if ($product->category === 'belly') {
+            return response()->json(['message' => 'Pictures are not supported for boneless lechon belly.'], 422);
         }
 
         $validated = $request->validate([
@@ -128,8 +128,8 @@ class ProductAdminController extends Controller
 
     public function deleteImage(Product $product): JsonResponse
     {
-        if ($product->category !== 'addon') {
-            return response()->json(['message' => 'Pictures can only be removed from add-on products.'], 422);
+        if ($product->category === 'belly') {
+            return response()->json(['message' => 'Pictures are not supported for boneless lechon belly.'], 422);
         }
 
         $this->deleteStoredPicture($product->product_picture);

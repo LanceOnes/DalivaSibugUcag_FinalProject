@@ -24,7 +24,7 @@ export function Navbar() {
           <img
             src={shopLogo}
             alt="BELLYlicious Lawaan"
-            className="h-7 w-auto object-contain sm:h-8"
+            className="h-7 w-auto object-contain sm:h-13"
             width={160}
             height={32}
           />
