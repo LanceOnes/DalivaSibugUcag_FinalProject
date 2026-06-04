@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,12 +15,19 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
+        $request->merge([
+            'phone' => preg_replace('/\D/', '', (string) $request->input('phone', '')),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'phone' => ['required', 'regex:/^09\d{9}$/'],
+            'password' => ['required', 'confirmed', 'min:8'],
             'address' => ['nullable', 'string'],
+        ], [
+            'phone.regex' => 'Enter a valid Philippine mobile number (11 digits, starting with 09).',
+            'password.min' => 'Password must be at least 8 characters.',
         ]);
 
         $user = User::create([
@@ -27,6 +35,7 @@ class AuthController extends Controller
             'role' => 'customer',
         ]);
 
+        $this->attachGuestOrders($request, $user);
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
@@ -57,6 +66,7 @@ class AuthController extends Controller
         }
 
         $user->tokens()->delete();
+        $this->attachGuestOrders($request, $user);
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
@@ -75,5 +85,47 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json(['user' => $request->user()]);
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'phone' => ['sometimes', 'string', 'max:20'],
+            'address' => ['nullable', 'string'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
+        ]);
+
+        if (! empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json(['user' => $user->fresh()]);
+    }
+
+    private function attachGuestOrders(Request $request, User $user): void
+    {
+        if ($user->role !== 'customer') {
+            return;
+        }
+
+        $guestToken = $request->header('X-Guest-Token');
+        if (empty($guestToken)) {
+            return;
+        }
+
+        Order::where('guest_token', $guestToken)
+            ->whereNull('user_id')
+            ->update([
+                'user_id' => $user->id,
+                'guest_token' => null,
+            ]);
     }
 }

@@ -28,18 +28,32 @@ class TimeSlotController extends Controller
         }
 
         $slots = $query->orderBy('start_time')->get()
-            ->map(fn (TimeSlot $slot) => [
-                'id' => $slot->id,
-                'start_time' => substr((string) $slot->start_time, 0, 5),
-                'end_time' => substr((string) $slot->end_time, 0, 5),
-                'label' => substr((string) $slot->start_time, 0, 5).' - '.substr((string) $slot->end_time, 0, 5),
-                'available_spots' => $slot->available_spots,
-                'max_orders' => $slot->max_orders,
-            ]);
+            ->map(function (TimeSlot $slot) {
+                $start = substr((string) $slot->start_time, 0, 5);
+                $end = substr((string) $slot->end_time, 0, 5);
+
+                return [
+                    'id' => $slot->id,
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'label' => $this->formatTime12($start).' - '.$this->formatTime12($end),
+                    'available_spots' => $slot->available_spots,
+                    'max_orders' => $slot->max_orders,
+                ];
+            });
 
         return response()->json([
             'slots' => $slots,
             'max_units_per_slot' => config('ordering.max_units_per_slot', 4),
         ]);
+    }
+
+    private function formatTime12(string $time): string
+    {
+        [$hours, $minutes] = array_map('intval', explode(':', $time));
+        $period = $hours >= 12 ? 'PM' : 'AM';
+        $hour12 = $hours % 12 ?: 12;
+
+        return sprintf('%d:%02d %s', $hour12, $minutes, $period);
     }
 }

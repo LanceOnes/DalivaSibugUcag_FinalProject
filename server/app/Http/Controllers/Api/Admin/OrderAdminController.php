@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\TimeSlot;
+use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,6 +45,91 @@ class OrderAdminController extends Controller
         $order->load(['items', 'user', 'timeSlot']);
 
         return response()->json(['order' => $order]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'customer_name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email'],
+            'phone' => ['required', 'string', 'max:20'],
+            'fulfillment_type' => ['required', 'in:pickup,delivery'],
+            'delivery_address' => ['required_if:fulfillment_type,delivery', 'nullable', 'string'],
+            'delivery_area' => ['nullable', 'string'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'scheduled_date' => ['required', 'date', 'after_or_equal:'.now()->addDay()->toDateString()],
+            'time_slot_id' => ['required', 'exists:time_slots,id'],
+            'scheduled_time' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
+            'status' => ['sometimes', 'in:pending,confirmed,preparing,ready_for_pickup,delivered,cancelled'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['nullable', 'exists:products,id'],
+            'items.*.product_variant_id' => ['nullable', 'exists:product_variants,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $order = DB::transaction(function () use ($validated) {
+            $lineItems = [];
+            $subtotal = 0;
+
+            foreach ($validated['items'] as $item) {
+                if (empty($item['product_variant_id']) && empty($item['product_id'])) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Each line item must reference a product or variant.',
+                    ], 422));
+                }
+                $line = $this->resolveLineItem($item);
+                $lineItems[] = $line;
+                $subtotal += $line['line_total'];
+            }
+
+            $unitsRequested = (int) collect($validated['items'])->sum('quantity');
+            $deliveryFee = $validated['fulfillment_type'] === 'delivery'
+                ? (float) ($validated['delivery_fee'] ?? config('ordering.delivery_fee', 150))
+                : 0;
+            $total = $subtotal + $deliveryFee;
+            $status = $validated['status'] ?? 'pending';
+
+            if ($status !== 'cancelled') {
+                $this->bookSlot((int) $validated['time_slot_id'], $unitsRequested);
+            }
+
+            $userId = null;
+            if (! empty($validated['email'])) {
+                $userId = User::where('email', $validated['email'])->where('role', 'customer')->value('id');
+            }
+
+            $order = Order::create([
+                'order_number' => Order::generateOrderNumber(),
+                'user_id' => $userId,
+                'guest_token' => null,
+                'customer_name' => $validated['customer_name'],
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'],
+                'fulfillment_type' => $validated['fulfillment_type'],
+                'delivery_address' => $validated['delivery_address'] ?? null,
+                'delivery_area' => $validated['delivery_area'] ?? null,
+                'delivery_fee' => $deliveryFee,
+                'scheduled_date' => $validated['scheduled_date'],
+                'time_slot_id' => $validated['time_slot_id'],
+                'scheduled_time' => $validated['scheduled_time'] ?? null,
+                'subtotal' => $subtotal,
+                'total' => $total,
+                'notes' => $validated['notes'] ?? null,
+                'status' => $status,
+            ]);
+
+            foreach ($lineItems as $line) {
+                OrderItem::create(['order_id' => $order->id, ...$line]);
+            }
+
+            return $order;
+        });
+
+        return response()->json([
+            'order' => $order->load(['items', 'user', 'timeSlot']),
+            'message' => 'Order created successfully.',
+        ], 201);
     }
 
     public function updateStatus(Request $request, Order $order): JsonResponse
@@ -222,6 +308,12 @@ class OrderAdminController extends Controller
         }
 
         $slot = TimeSlot::lockForUpdate()->findOrFail($slotId);
+
+        if (! $slot->is_active) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'This time slot is not available.',
+            ], 422));
+        }
 
         if ($slot->booked_count + $units > $slot->max_orders) {
             throw new HttpResponseException(response()->json([

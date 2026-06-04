@@ -28,13 +28,14 @@ Route::post('/delivery/calculate', [DeliveryController::class, 'calculateFee']);
 Route::get('/delivery/zones', [DeliveryController::class, 'zones']);
 
 Route::post('/orders', [OrderController::class, 'store']);
+Route::get('/orders', [OrderController::class, 'index']);
+Route::get('/orders/{order}', [OrderController::class, 'show']);
 
 
 Route::middleware('auth:sanctum')->group(function () { // user or customer
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::put('/me', [AuthController::class, 'updateProfile']);
 });
 
 
@@ -45,6 +46,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/products/{product}/image', [ProductAdminController::class, 'uploadImage']);
     Route::delete('/products/{product}/image', [ProductAdminController::class, 'deleteImage']);
     Route::get('/orders', [OrderAdminController::class, 'index']);
+    Route::post('/orders', [OrderAdminController::class, 'store']);
     Route::get('/orders/{order}', [OrderAdminController::class, 'show']);
     Route::patch('/orders/{order}/status', [OrderAdminController::class, 'updateStatus']);
     Route::put('/orders/{order}', [OrderAdminController::class, 'update']);

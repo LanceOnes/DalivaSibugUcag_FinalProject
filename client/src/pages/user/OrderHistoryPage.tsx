@@ -46,25 +46,34 @@ function formatScheduledLabel(dateString: string, timeLabel: string | null) {
   return `${formattedDate} · ${formattedTime}`
 }
 
+async function fetchAllOrders(): Promise<Order[]> {
+  const { data } = await axiosInstance.get('/orders', { params: { page: 1 } })
+  let list: Order[] = Array.isArray(data.data) ? data.data : []
+  const lastPage = data.last_page ?? 1
+
+  if (lastPage > 1) {
+    const pages = await Promise.all(
+      Array.from({ length: lastPage - 1 }, (_, i) =>
+        axiosInstance.get('/orders', { params: { page: i + 2 } }).then((res) => res.data.data ?? []),
+      ),
+    )
+    list = [...list, ...pages.flat()]
+  }
+
+  return list
+}
+
 export function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
-  const loadOrders = () => {
-    setLoading(true)
-    axiosInstance
-      .get('/orders')
-      .then(({ data }) => setOrders(data.data ?? data))
-      .finally(() => setLoading(false))
-  }
-
   useEffect(() => {
-    loadOrders()
+    setLoading(true)
+    fetchAllOrders()
+      .then(setOrders)
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false))
   }, [])
-
-  const completedStatuses: Order['status'][] = ['delivered', 'cancelled']
-  const currentOrder = orders.find((order) => !completedStatuses.includes(order.status))
-  const orderHistory = orders.filter((order) => completedStatuses.includes(order.status))
 
   if (loading) {
     return (
@@ -93,7 +102,7 @@ export function OrderHistoryPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h2 className="font-display text-xl font-bold text-belly-brown">Orders</h2>
         <p className="mt-1 text-sm text-belly-brown/50">
@@ -101,48 +110,32 @@ export function OrderHistoryPage() {
         </p>
       </div>
 
-      {currentOrder && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-belly-brown">Current Order</h3>
-          <Card className="glass-card border-belly-gold bg-belly-gold/5">
+      <div className="space-y-3">
+        {orders.map((order) => (
+          <Card
+            key={order.id}
+            className={
+              ['delivered', 'cancelled'].includes(order.status)
+                ? 'card-hover glass-card'
+                : 'glass-card border-belly-gold bg-belly-gold/5'
+            }
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
-                <CardTitle className="text-base font-semibold">{currentOrder.order_number}</CardTitle>
-                <p className="text-sm text-belly-brown/60">In progress</p>
+                <CardTitle className="text-base font-semibold">{order.order_number}</CardTitle>
+                <p className="text-sm capitalize text-belly-brown/60">{order.fulfillment_type}</p>
               </div>
-              <OrderStatusBadge status={currentOrder.status} />
+              <OrderStatusBadge status={order.status} />
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex flex-col gap-2 text-belly-brown/70">
-                <p>Scheduled: {formatScheduledLabel(currentOrder.scheduled_date, currentOrder.scheduled_time)}</p>
-                <p>Type: {currentOrder.fulfillment_type}</p>
-                <p>Total: <span className="font-semibold text-belly-red">{formatPeso(Number(currentOrder.total))}</span></p>
+            <CardContent className="flex items-end justify-between text-sm">
+              <div className="text-belly-brown/70">
+                <p>{formatScheduledLabel(order.scheduled_date, order.scheduled_time)}</p>
               </div>
+              <p className="font-bold text-belly-red">{formatPeso(Number(order.total))}</p>
             </CardContent>
           </Card>
-        </div>
-      )}
-
-      {orderHistory.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-belly-brown">Order History</h3>
-          {orderHistory.map((o) => (
-            <Card key={o.id} className="card-hover glass-card">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold">{o.order_number}</CardTitle>
-                <OrderStatusBadge status={o.status} />
-              </CardHeader>
-              <CardContent className="flex items-end justify-between text-sm">
-                <div className="text-belly-brown/70">
-                  <p>{formatScheduledLabel(o.scheduled_date, o.scheduled_time)}</p>
-                  <p className="capitalize">{o.fulfillment_type}</p>
-                </div>
-                <p className="font-bold text-belly-red">{formatPeso(Number(o.total))}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }

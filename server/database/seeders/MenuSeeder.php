@@ -11,9 +11,8 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         $belly = Product::updateOrCreate(
-            ['slug' => 'boneless-lechon-belly'],
+            ['name' => 'Boneless Lechon Belly'],
             [
-                'name' => 'Boneless Lechon Belly',
                 'description' => 'Crispy-skinned, tender boneless lechon belly — our signature BELLYlicious roast. Perfect for family gatherings and celebrations in Roxas City.',
                 'image' => '/images/belly-hero.jpg',
                 'category' => 'belly',
@@ -37,19 +36,18 @@ class MenuSeeder extends Seeder
         }
 
         $addons = [
-            ['name' => 'Lechon Sauce', 'slug' => 'lechon-sauce', 'price' => 80, 'description' => 'Rich homemade lechon sauce'],
-            ['name' => 'Spiced Vinegar', 'slug' => 'spiced-vinegar', 'price' => 60, 'description' => 'Sinamak-style spiced vinegar dip'],
-            ['name' => 'Steamed Rice (Tray)', 'slug' => 'steamed-rice-tray', 'price' => 250, 'description' => 'Good for 10 servings'],
-            ['name' => 'Iced Tea Pitcher', 'slug' => 'iced-tea-pitcher', 'price' => 120, 'description' => 'Refreshing house-blend iced tea'],
+            ['name' => 'Lechon Sauce', 'price' => 80, 'description' => 'Rich homemade lechon sauce', 'category' => 'addon'],
+            ['name' => 'Spiced Vinegar', 'price' => 60, 'description' => 'Sinamak-style spiced vinegar dip', 'category' => 'addon'],
+            ['name' => 'Steamed Rice (Tray)', 'price' => 250, 'description' => 'Good for 10 servings', 'category' => 'addon'],
+            ['name' => 'Iced Tea Pitcher', 'price' => 120, 'description' => 'Refreshing house-blend iced tea', 'category' => 'drink'],
         ];
 
         foreach ($addons as $i => $addon) {
             Product::updateOrCreate(
-                ['slug' => $addon['slug']],
+                ['name' => $addon['name']],
                 [
-                    'name' => $addon['name'],
                     'description' => $addon['description'],
-                    'category' => str_contains($addon['slug'], 'tea') ? 'drink' : 'addon',
+                    'category' => $addon['category'],
                     'price' => $addon['price'],
                     'is_active' => true,
                     'sort_order' => $i + 1,

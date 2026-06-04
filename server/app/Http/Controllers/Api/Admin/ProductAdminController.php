@@ -8,8 +8,6 @@ use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-
 class ProductAdminController extends Controller
 {
     public function index(): JsonResponse
@@ -36,10 +34,7 @@ class ProductAdminController extends Controller
             'variants.*.is_active' => ['boolean'],
         ]);
 
-        $product = Product::create([
-            ...$validated,
-            'slug' => Str::slug($validated['name']).'-'.Str::random(4),
-        ]);
+        $product = Product::create($validated);
 
         if (! empty($validated['variants'])) {
             foreach ($validated['variants'] as $i => $variant) {
@@ -120,7 +115,10 @@ class ProductAdminController extends Controller
 
         $this->deleteStoredPicture($product->product_picture);
 
-        $path = $validated['product_picture']->store('products', 'public');
+        $file = $validated['product_picture'];
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $filename = hash('sha256', $file->get()).'.'.$extension;
+        $path = $file->storeAs('products', $filename, 'public');
         $product->update(['product_picture' => $path]);
 
         return response()->json(['product' => $product->fresh()->load('variants')]);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Support\ResolvesSanctumUser;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -15,6 +16,8 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
+    use ResolvesSanctumUser;
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -35,7 +38,9 @@ class OrderController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
+        $user = $this->sanctumUser($request);
+
+        return DB::transaction(function () use ($request, $validated, $user) {
             $subtotal = 0;
             $lineItems = [];
 
@@ -55,6 +60,13 @@ class OrderController extends Controller
             $maxUnits = config('ordering.max_units_per_slot', 4);
 
             $slot = TimeSlot::lockForUpdate()->findOrFail($validated['time_slot_id']);
+
+            if (! $slot->is_active) {
+                return response()->json([
+                    'message' => 'This time slot is no longer available. Please choose another schedule.',
+                ], 422);
+            }
+
             if ($slot->booked_count + $unitsRequested > $slot->max_orders) {
                 $remaining = max(0, $slot->max_orders - $slot->booked_count);
 
@@ -64,14 +76,14 @@ class OrderController extends Controller
             }
             $slot->increment('booked_count', $unitsRequested);
 
-            $guestToken = $request->user() ? null : Str::uuid()->toString();
+            $guestToken = $user ? null : Str::uuid()->toString();
 
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
-                'user_id' => $request->user()?->id,
+                'user_id' => $user?->id,
                 'guest_token' => $guestToken,
                 'customer_name' => $validated['customer_name'],
-                'email' => $validated['email'] ?? $request->user()?->email,
+                'email' => $validated['email'] ?? $user?->email,
                 'phone' => $validated['phone'],
                 'fulfillment_type' => $validated['fulfillment_type'],
                 'delivery_address' => $validated['delivery_address'] ?? null,
@@ -106,9 +118,22 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Order::with('items')->latest();
+        $user = $this->sanctumUser($request);
 
-        if ($request->user()) {
-            $query->where('user_id', $request->user()->id);
+        if ($user) {
+            Order::whereNull('user_id')
+                ->where('email', $user->email)
+                ->update(['user_id' => $user->id, 'guest_token' => null]);
+
+            $guestToken = $request->header('X-Guest-Token');
+            $query->where(function ($q) use ($user, $guestToken) {
+                $q->where('user_id', $user->id);
+                if ($guestToken) {
+                    $q->orWhere(function ($q2) use ($guestToken) {
+                        $q2->where('guest_token', $guestToken)->whereNull('user_id');
+                    });
+                }
+            });
         } else {
             $guestToken = $request->header('X-Guest-Token');
             if (empty($guestToken)) {
@@ -116,22 +141,25 @@ class OrderController extends Controller
                     'data' => [],
                     'current_page' => 1,
                     'last_page' => 1,
-                    'per_page' => 10,
+                    'per_page' => 100,
                     'total' => 0,
                 ]);
             }
             $query->where('guest_token', $guestToken)->whereNull('user_id');
         }
 
-        return response()->json($query->paginate(10));
+        return response()->json($query->paginate(100));
     }
 
     public function show(Request $request, Order $order): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->sanctumUser($request);
 
         if (! $user?->isAdmin() && (int) $order->user_id !== (int) $user?->id) {
-            return response()->json(['message' => 'Not found'], 404);
+            $guestToken = $request->header('X-Guest-Token');
+            if (! $guestToken || $order->guest_token !== $guestToken || $order->user_id !== null) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
         }
 
         $order->load('items', 'timeSlot');

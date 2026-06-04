@@ -28,6 +28,14 @@ interface AuthContextValue {
   }) => Promise<void>
   logout: () => Promise<void>
   fetchMe: () => Promise<void>
+  updateProfile: (data: {
+    name?: string
+    email?: string
+    phone?: string
+    address?: string | null
+    password?: string
+    password_confirmation?: string
+  }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -94,6 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await axiosInstance.post('/register', payload)
         setAuth(data.user, data.token)
         toast.success('Account created!', 'You are now signed in.')
+      } catch (err) {
+        setIsLoading(false)
+        throw err
       } finally {
         setIsLoading(false)
       }
@@ -117,6 +128,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await axiosInstance.get('/me')
     setAuth(data.user, t)
   }, [token, setAuth])
+
+  const updateProfile = useCallback(
+    async (payload: {
+      name?: string
+      email?: string
+      phone?: string
+      address?: string | null
+      password?: string
+      password_confirmation?: string
+    }) => {
+      setIsLoading(true)
+      try {
+        const { data } = await axiosInstance.put('/me', payload)
+        const t = token || localStorage.getItem('belly_token')
+        if (t) {
+          setAuth(data.user, t)
+        }
+        toast.success('Profile updated')
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [token, setAuth],
+  )
 
   useEffect(() => {
     const t = token || localStorage.getItem('belly_token')
@@ -150,8 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token, setAuth, clearAuth])
 
   const value = useMemo(
-    () => ({ user, token, isLoading, isAuthReady, login, register, logout, fetchMe }),
-    [user, token, isLoading, isAuthReady, login, register, logout, fetchMe],
+    () => ({ user, token, isLoading, isAuthReady, login, register, logout, fetchMe, updateProfile }),
+    [user, token, isLoading, isAuthReady, login, register, logout, fetchMe, updateProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -19,16 +19,5 @@ class AdminSeeder extends Seeder
                 'role' => 'admin',
             ]
         );
-
-        User::updateOrCreate(
-            ['email' => 'customer@example.com'],
-            [
-                'name' => 'Juan Dela Cruz',
-                'phone' => '09189876543',
-                'password' => 'password123',
-                'role' => 'customer',
-                'address' => 'St. Ignatius Heights, Lawaan, Roxas City',
-            ]
-        );
     }
 }

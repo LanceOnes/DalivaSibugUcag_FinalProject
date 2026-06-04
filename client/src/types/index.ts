@@ -22,7 +22,6 @@ export interface ProductVariant {
 export interface Product {
   id: number
   name: string
-  slug: string
   description: string | null
   image: string | null
   product_picture: string | null

@@ -38,6 +38,7 @@ class TimeSlotAdminController extends Controller
         ]);
 
         $validated['max_orders'] = $validated['max_orders'] ?? $cap;
+        $validated['is_active'] = $validated['is_active'] ?? true;
 
         $slot = TimeSlot::create($validated);
 

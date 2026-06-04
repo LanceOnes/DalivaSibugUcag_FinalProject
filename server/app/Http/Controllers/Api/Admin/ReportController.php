@@ -14,6 +14,7 @@ class ReportController extends Controller
     {
         $from = $request->get('from', now()->startOfMonth()->toDateString());
         $to = $request->get('to', now()->toDateString());
+        $period = $request->get('period', 'daily');
 
         $orders = Order::whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
             ->whereNotIn('status', ['cancelled']);
@@ -40,19 +41,56 @@ class ReportController extends Controller
             ->get();
 
         $fulfillmentSplit = Order::whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->whereNotIn('status', ['cancelled'])
             ->select('fulfillment_type', DB::raw('count(*) as count'))
             ->groupBy('fulfillment_type')
             ->pluck('count', 'fulfillment_type');
 
+        $fulfillmentTracking = $period === 'monthly'
+            ? $this->fulfillmentByMonth($from, $to)
+            : $this->fulfillmentByDay($from, $to);
+
         return response()->json([
             'from' => $from,
             'to' => $to,
+            'period' => $period,
             'total_revenue' => (float) $totalRevenue,
             'total_orders' => $totalOrders,
             'avg_order_value' => round($avgOrderValue, 2),
             'daily_revenue' => $dailyRevenue,
             'top_products' => $topProducts,
             'fulfillment_split' => $fulfillmentSplit,
+            'fulfillment_tracking' => $fulfillmentTracking,
         ]);
+    }
+
+    private function fulfillmentByDay(string $from, string $to)
+    {
+        return Order::whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->whereNotIn('status', ['cancelled'])
+            ->select(
+                DB::raw('DATE(created_at) as period'),
+                DB::raw("SUM(CASE WHEN fulfillment_type = 'pickup' THEN 1 ELSE 0 END) as pickup_count"),
+                DB::raw("SUM(CASE WHEN fulfillment_type = 'delivery' THEN 1 ELSE 0 END) as delivery_count"),
+                DB::raw('COUNT(*) as total_count'),
+            )
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get();
+    }
+
+    private function fulfillmentByMonth(string $from, string $to)
+    {
+        return Order::whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->whereNotIn('status', ['cancelled'])
+            ->select(
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as period"),
+                DB::raw("SUM(CASE WHEN fulfillment_type = 'pickup' THEN 1 ELSE 0 END) as pickup_count"),
+                DB::raw("SUM(CASE WHEN fulfillment_type = 'delivery' THEN 1 ELSE 0 END) as delivery_count"),
+                DB::raw('COUNT(*) as total_count'),
+            )
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get();
     }
 }

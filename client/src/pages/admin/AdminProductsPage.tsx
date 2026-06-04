@@ -55,7 +55,7 @@ export function AdminProductsPage() {
   }
 
   const removeExistingPicture = async () => {
-    if (!editing || editing.category === 'belly' || !editing.id) return
+    if (!editing || !editing.id) return
     await axiosInstance.delete(`/admin/products/${editing.id}/image`)
     setEditing({ ...editing, product_picture: null, product_picture_url: null })
     toast.success('Image removed')
@@ -188,25 +188,36 @@ export function AdminProductsPage() {
               Add product
             </Button>
           </div>
-          <div className="mt-4 space-y-3">
-            {otherProducts.map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-xl border bg-white p-4">
-                <div>
-                  <p className="font-semibold">{p.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {p.category} · {p.variants?.length ?? 0} variants
-                  </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {otherProducts.map((p) => {
+              const img = p.product_picture_url
+              return (
+                <div key={p.id} className="flex gap-3 rounded-xl border bg-white p-4">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                    {img ? (
+                      <img src={img} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-gray-400">No photo</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{p.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {p.category}
+                      {p.variants?.length ? ` · ${p.variants.length} variants` : p.price != null ? ` · ₱${p.price}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button size="sm" variant="outline" onClick={() => startEdit(p)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => removeProduct(p)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startEdit(p)}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => removeProduct(p)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </>
       )}
