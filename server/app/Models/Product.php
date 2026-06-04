@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -53,6 +54,6 @@ class Product extends Model
             ? $this->product_picture
             : ltrim($this->product_picture, '/');
 
-        return asset('storage/'.$path);
+        return Storage::disk('public')->url($path);
     }
 }

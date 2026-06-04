@@ -26,14 +26,18 @@ class TimeSlotAdminController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $cap = config('ordering.max_units_per_slot', 4);
+
         $validated = $request->validate([
             'slot_date' => ['required', 'date'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'type' => ['required', 'in:pickup,delivery'],
-            'max_orders' => ['integer', 'min:1'],
+            'max_orders' => ['integer', 'min:1', 'max:'.$cap],
             'is_active' => ['boolean'],
         ]);
+
+        $validated['max_orders'] = $validated['max_orders'] ?? $cap;
 
         $slot = TimeSlot::create($validated);
 
@@ -42,12 +46,14 @@ class TimeSlotAdminController extends Controller
 
     public function update(Request $request, TimeSlot $timeSlot): JsonResponse
     {
+        $cap = config('ordering.max_units_per_slot', 4);
+
         $validated = $request->validate([
             'slot_date' => ['sometimes', 'date'],
             'start_time' => ['sometimes', 'date_format:H:i'],
             'end_time' => ['sometimes', 'date_format:H:i'],
             'type' => ['sometimes', 'in:pickup,delivery'],
-            'max_orders' => ['integer', 'min:1'],
+            'max_orders' => ['integer', 'min:1', 'max:'.$cap],
             'is_active' => ['boolean'],
         ]);
 

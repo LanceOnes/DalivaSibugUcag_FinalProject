@@ -29,7 +29,7 @@ class TimeSlotSeeder extends Seeder
                         ],
                         [
                             'end_time' => $end,
-                            'max_orders' => 5,
+                            'max_orders' => config('ordering.max_units_per_slot', 4),
                             'booked_count' => 0,
                             'is_active' => true,
                         ]

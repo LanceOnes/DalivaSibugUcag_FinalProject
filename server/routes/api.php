@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/orders', [OrderAdminController::class, 'index']);
     Route::get('/orders/{order}', [OrderAdminController::class, 'show']);
     Route::patch('/orders/{order}/status', [OrderAdminController::class, 'updateStatus']);
+    Route::put('/orders/{order}', [OrderAdminController::class, 'update']);
 
     Route::get('/time-slots', [TimeSlotAdminController::class, 'index']);
     Route::get('/time-slots/calendar', [TimeSlotAdminController::class, 'calendar']);

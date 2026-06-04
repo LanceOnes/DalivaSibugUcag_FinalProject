@@ -14,7 +14,7 @@ return new class extends Migration
             $table->time('start_time');
             $table->time('end_time');
             $table->enum('type', ['pickup', 'delivery'])->default('pickup');
-            $table->unsignedInteger('max_orders')->default(5);
+            $table->unsignedInteger('max_orders')->default(4);
             $table->unsignedInteger('booked_count')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();

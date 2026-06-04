@@ -43,12 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser)
     setToken(nextToken)
     persistAuth(nextUser, nextToken)
+    localStorage.removeItem('belly_guest_token')
   }, [])
 
   const clearAuth = useCallback(() => {
     setUser(null)
     setToken(null)
     persistAuth(null, null)
+    localStorage.removeItem('belly_guest_token')
   }, [])
 
   useEffect(() => {

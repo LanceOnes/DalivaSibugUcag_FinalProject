@@ -1,12 +1,17 @@
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { useSchedule } from '@/context/ScheduleContext'
+import { SchedulePicker } from '@/components/SchedulePicker'
 import { formatPeso } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
 export function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal } = useCart()
+  const { items, updateQuantity, removeItem, subtotal, itemCount } = useCart()
+  const { slotId, availableSpots } = useSchedule()
+  const units = itemCount()
+  const canCheckout = Boolean(slotId) && units > 0 && units <= availableSpots
 
   if (items.length === 0) {
     return (
@@ -23,6 +28,9 @@ export function CartPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold text-belly-brown">Your Cart</h1>
+      <div className="mt-6">
+        <SchedulePicker cartUnits={units} />
+      </div>
       <div className="mt-6 space-y-4">
         {items.map((item) => (
           <Card key={item.key} className="glass-card flex items-center justify-between gap-4 p-4">
@@ -52,9 +60,16 @@ export function CartPage() {
           <span className="text-belly-red">{formatPeso(subtotal())}</span>
         </div>
         <p className="mt-2 text-xs text-belly-brown/60">Delivery fee is calculated separately at checkout.</p>
-        <Link to="/checkout" className="mt-4 block cursor-pointer">
-          <Button variant="gold" className="w-full" size="lg">Proceed to Checkout</Button>
+        <Link to="/checkout" className={`mt-4 block ${canCheckout ? 'cursor-pointer' : 'pointer-events-none'}`}>
+          <Button variant="gold" className="w-full" size="lg" disabled={!canCheckout}>
+            Proceed to Checkout
+          </Button>
         </Link>
+        {!canCheckout && units > 0 && (
+          <p className="mt-2 text-center text-xs text-red-600">
+            Select a time slot with enough spots for your cart ({units} items).
+          </p>
+        )}
       </div>
     </div>
   )

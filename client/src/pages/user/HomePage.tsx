@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, MapPin, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import heroImg from '@/assets/hero.png'
+import homeImg from '@/assets/home.png'
 
 export function HomePage() {
   return (
     <>
       <section className="relative min-h-[85vh] overflow-hidden">
         <img
-          src={heroImg}
+          src={homeImg}
           alt="Crispy boneless lechon belly"
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -27,11 +27,6 @@ export function HomePage() {
             <Link to="/menu" className="cursor-pointer">
               <Button variant="gold" size="lg">
                 Order Now <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/menu" className="cursor-pointer">
-              <Button variant="outline" size="lg" className="border-white/40 text-white hover:bg-white/10">
-                View Menu
               </Button>
             </Link>
           </div>

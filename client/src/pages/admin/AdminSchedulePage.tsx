@@ -44,7 +44,7 @@ export function AdminSchedulePage() {
     start_time: '09:00',
     end_time: '11:00',
     type: 'pickup',
-    max_orders: 5,
+    max_orders: 4,
   })
 
   const load = () => axiosInstance.get('/admin/time-slots').then(({ data }) => setSlots(data.slots))

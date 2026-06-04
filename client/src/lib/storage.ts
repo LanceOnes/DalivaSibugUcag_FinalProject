@@ -34,6 +34,41 @@ export function saveCartItems(items: CartItem[]) {
   localStorage.setItem('belly-cart', JSON.stringify(items))
 }
 
+export type SavedSchedule = {
+  date: string
+  fulfillment: 'pickup' | 'delivery'
+  slotId: number | null
+}
+
+export function loadSchedule(): SavedSchedule | null {
+  try {
+    const raw = localStorage.getItem('belly-schedule')
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      typeof (parsed as SavedSchedule).date === 'string' &&
+      ((parsed as SavedSchedule).fulfillment === 'pickup' ||
+        (parsed as SavedSchedule).fulfillment === 'delivery')
+    ) {
+      const s = parsed as SavedSchedule
+      return {
+        date: s.date,
+        fulfillment: s.fulfillment,
+        slotId: typeof s.slotId === 'number' ? s.slotId : null,
+      }
+    }
+  } catch {
+    localStorage.removeItem('belly-schedule')
+  }
+  return null
+}
+
+export function saveSchedule(schedule: SavedSchedule) {
+  localStorage.setItem('belly-schedule', JSON.stringify(schedule))
+}
+
 export function loadAuth(): { user: User | null; token: string | null } {
   try {
     const raw = localStorage.getItem('belly-auth')

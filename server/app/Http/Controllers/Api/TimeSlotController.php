@@ -14,22 +14,32 @@ class TimeSlotController extends Controller
         $validated = $request->validate([
             'date' => ['required', 'date', 'after_or_equal:today'],
             'type' => ['required', 'in:pickup,delivery'],
+            'units_needed' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $slots = TimeSlot::where('slot_date', $validated['date'])
+        $query = TimeSlot::where('slot_date', $validated['date'])
             ->where('type', $validated['type'])
             ->where('is_active', true)
-            ->whereColumn('booked_count', '<', 'max_orders')
-            ->orderBy('start_time')
-            ->get()
+            ->whereColumn('booked_count', '<', 'max_orders');
+
+        if (! empty($validated['units_needed'])) {
+            $needed = (int) $validated['units_needed'];
+            $query->whereRaw('(max_orders - booked_count) >= ?', [$needed]);
+        }
+
+        $slots = $query->orderBy('start_time')->get()
             ->map(fn (TimeSlot $slot) => [
                 'id' => $slot->id,
                 'start_time' => substr((string) $slot->start_time, 0, 5),
                 'end_time' => substr((string) $slot->end_time, 0, 5),
                 'label' => substr((string) $slot->start_time, 0, 5).' - '.substr((string) $slot->end_time, 0, 5),
                 'available_spots' => $slot->available_spots,
+                'max_orders' => $slot->max_orders,
             ]);
 
-        return response()->json(['slots' => $slots]);
+        return response()->json([
+            'slots' => $slots,
+            'max_units_per_slot' => config('ordering.max_units_per_slot', 4),
+        ]);
     }
 }

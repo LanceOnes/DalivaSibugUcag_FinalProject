@@ -26,7 +26,7 @@ class OrderController extends Controller
             'delivery_area' => ['nullable', 'string'],
             'delivery_fee' => ['nullable', 'numeric', 'min:0'],
             'scheduled_date' => ['required', 'date', 'after_or_equal:'.now()->addDay()->toDateString()],
-            'time_slot_id' => ['nullable', 'exists:time_slots,id'],
+            'time_slot_id' => ['required', 'exists:time_slots,id'],
             'scheduled_time' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
@@ -46,18 +46,23 @@ class OrderController extends Controller
             }
 
             $deliveryFee = $validated['fulfillment_type'] === 'delivery'
-                ? (float) ($validated['delivery_fee'] ?? 0)
+                ? (float) config('ordering.delivery_fee', 150)
                 : 0;
 
             $total = $subtotal + $deliveryFee;
 
-            if (! empty($validated['time_slot_id'])) {
-                $slot = TimeSlot::lockForUpdate()->findOrFail($validated['time_slot_id']);
-                if ($slot->is_full) {
-                    return response()->json(['message' => 'Selected time slot is fully booked.'], 422);
-                }
-                $slot->increment('booked_count');
+            $unitsRequested = (int) collect($validated['items'])->sum('quantity');
+            $maxUnits = config('ordering.max_units_per_slot', 4);
+
+            $slot = TimeSlot::lockForUpdate()->findOrFail($validated['time_slot_id']);
+            if ($slot->booked_count + $unitsRequested > $slot->max_orders) {
+                $remaining = max(0, $slot->max_orders - $slot->booked_count);
+
+                return response()->json([
+                    'message' => "This time slot only has {$remaining} spot(s) left (max {$maxUnits} per slot). Reduce your cart quantity or choose another time.",
+                ], 422);
             }
+            $slot->increment('booked_count', $unitsRequested);
 
             $guestToken = $request->user() ? null : Str::uuid()->toString();
 
@@ -100,25 +105,32 @@ class OrderController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $guestToken = $request->header('X-Guest-Token');
+        $query = Order::with('items')->latest();
 
-        $orders = Order::with('items')
-            ->where(function ($query) use ($request, $guestToken) {
-                $query->where('user_id', $request->user()->id);
+        if ($request->user()) {
+            $query->where('user_id', $request->user()->id);
+        } else {
+            $guestToken = $request->header('X-Guest-Token');
+            if (empty($guestToken)) {
+                return response()->json([
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 10,
+                    'total' => 0,
+                ]);
+            }
+            $query->where('guest_token', $guestToken)->whereNull('user_id');
+        }
 
-                if (! empty($guestToken)) {
-                    $query->orWhere('guest_token', $guestToken);
-                }
-            })
-            ->latest()
-            ->paginate(10);
-
-        return response()->json($orders);
+        return response()->json($query->paginate(10));
     }
 
     public function show(Request $request, Order $order): JsonResponse
     {
-        if ($order->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+        $user = $request->user();
+
+        if (! $user?->isAdmin() && (int) $order->user_id !== (int) $user?->id) {
             return response()->json(['message' => 'Not found'], 404);
         }
 

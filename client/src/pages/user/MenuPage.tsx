@@ -8,6 +8,7 @@ import type { MenuData, Product, ProductVariant } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCart } from '@/context/CartContext'
+import { SchedulePicker } from '@/components/SchedulePicker'
 import { Spinner, PageSpinnerOverlay } from '@/components/ui/spinner'
 import list from '@/assets/img/list.png'
 
@@ -18,7 +19,7 @@ function getVariants(p: Product): ProductVariant[] {
 export function MenuPage() {
   const [menu, setMenu] = useState<MenuData | null>(null)
   const [loading, setLoading] = useState(true)
-  const { addItem, isAdding } = useCart()
+  const { addItem, isAdding, itemCount } = useCart()
   const { user, token } = useAuth()
   const isCustomerLoggedIn = Boolean(token) && user?.role === 'customer'
 
@@ -69,7 +70,6 @@ export function MenuPage() {
             </p>
           )}
         </div>
-
         {belly && (
           <div className="card-hover glass-card mt-10 overflow-hidden">
             <div className="grid md:grid-cols-2">
@@ -139,19 +139,36 @@ export function MenuPage() {
           <>
             <h2 className="mt-12 font-display text-2xl font-bold text-belly-brown">Drinks</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {menu.drinks.map((p) => (
-                <Card key={p.id} className="card-hover glass-card p-4">
-                  <p className="font-semibold">{p.name}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="font-bold text-belly-red">{formatPeso(Number(p.price))}</span>
-                    <Button size="sm" variant="outline" onClick={() => addAddon(p)}>Add</Button>
-                  </div>
-                </Card>
-              ))}
+              {menu.drinks.map((p) => {
+                const photo = p.product_picture_url
+                return (
+                  <Card key={p.id} className="card-hover glass-card overflow-hidden p-0">
+                    <div className="aspect-4/3 w-full overflow-hidden bg-belly-cream">
+                      {photo ? (
+                        <img src={photo} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-belly-brown/40">
+                          No photo
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="font-semibold">{p.name}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-belly-brown/60">{p.description}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="font-bold text-belly-red">{formatPeso(Number(p.price))}</span>
+                        <Button size="sm" variant="outline" onClick={() => addAddon(p)}>
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                )
+              })}
             </div>
           </>
         )}
       </div>
     </>
   )
-}
+} 

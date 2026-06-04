@@ -69,6 +69,8 @@ export type OrderStatus =
 
 export interface OrderItem {
   id: number
+  product_id?: number | null
+  product_variant_id?: number | null
   item_name: string
   size_label: string | null
   unit_price: string | number
@@ -84,8 +86,10 @@ export interface Order {
   phone: string
   fulfillment_type: 'pickup' | 'delivery'
   delivery_address: string | null
+  delivery_area?: string | null
   delivery_fee: string | number
   scheduled_date: string
+  time_slot_id?: number | null
   scheduled_time: string | null
   subtotal: string | number
   total: string | number
