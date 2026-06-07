@@ -119,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     clearAuth()
+    window.dispatchEvent(new Event('belly-auth-logout'))
     toast.success('Signed out', 'See you again soon!')
   }, [clearAuth])
 

@@ -46,6 +46,12 @@ function CartProviderInner({ children }: { children: ReactNode }) {
     }
   }, [items, schedule.refreshSlots])
 
+  useEffect(() => {
+    const onLogout = () => setItems([])
+    window.addEventListener('belly-auth-logout', onLogout)
+    return () => window.removeEventListener('belly-auth-logout', onLogout)
+  }, [])
+
   const totalUnits = useCallback(() => {
     const list = Array.isArray(items) ? items : []
     return list.reduce((sum, i) => sum + i.quantity, 0)
