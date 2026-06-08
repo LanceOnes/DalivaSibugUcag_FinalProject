@@ -4,6 +4,7 @@ export type ProductOption = {
   value: string
   label: string
   unitPrice: number
+  usesSlot: boolean
 }
 
 export function buildProductOptions(products: Product[]): ProductOption[] {
@@ -20,6 +21,7 @@ export function buildProductOptions(products: Product[]): ProductOption[] {
           value: `v-${variant.id}`,
           label: `${product.name} — ${variant.size_label}`,
           unitPrice: Number(variant.price),
+          usesSlot: true,
         })
       }
     } else if (product.price != null) {
@@ -27,11 +29,22 @@ export function buildProductOptions(products: Product[]): ProductOption[] {
         value: `p-${product.id}`,
         label: product.name,
         unitPrice: Number(product.price),
+        usesSlot: false,
       })
     }
   }
 
   return options
+}
+
+export function slotUnitsFromLines(
+  lines: { selection: string; quantity: number }[],
+  optionMap: Map<string, ProductOption>,
+): number {
+  return lines.reduce((sum, line) => {
+    const opt = optionMap.get(line.selection)
+    return sum + (opt?.usesSlot ? line.quantity : 0)
+  }, 0)
 }
 
 export function selectionToPayload(selection: string, quantity: number) {

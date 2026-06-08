@@ -34,6 +34,7 @@ export function MenuPage() {
       name: product.name,
       sizeLabel: variant.size_label,
       unitPrice: Number(variant.price),
+      category: 'belly',
     })
   }
 
@@ -42,6 +43,7 @@ export function MenuPage() {
       productId: product.id,
       name: product.name,
       unitPrice: Number(product.price),
+      category: product.category,
     })
   }
 

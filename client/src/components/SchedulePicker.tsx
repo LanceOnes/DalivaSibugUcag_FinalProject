@@ -24,7 +24,10 @@ export function SchedulePicker({ cartUnits = 0, compact = false }: SchedulePicke
   } = useSchedule()
 
   const minDate = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+  const spotsRemaining = Math.max(0, availableSpots - cartUnits)
   const overCapacity = cartUnits > availableSpots
+
+  const spotsLeftForCart = (slotAvailable: number) => Math.max(0, slotAvailable - cartUnits)
 
   return (
     <div
@@ -37,9 +40,9 @@ export function SchedulePicker({ cartUnits = 0, compact = false }: SchedulePicke
       <div>
         <p className="text-sm font-semibold text-belly-brown">Pickup or delivery schedule</p>
         <p className="mt-1 text-xs text-belly-brown/60">
-          Each item in your cart uses one spot (max {maxUnitsPerSlot} per time slot).
+          Each belly order uses one spot (max {maxUnitsPerSlot} per time slot). Add-ons and drinks do not count.
           {cartUnits > 0 && (
-            <> You have <strong>{cartUnits}</strong> in your cart.</>
+            <> You have <strong>{cartUnits}</strong> belly order{cartUnits === 1 ? '' : 's'} in your cart.</>
           )}
         </p>
       </div>
@@ -74,6 +77,7 @@ export function SchedulePicker({ cartUnits = 0, compact = false }: SchedulePicke
             </div>
           ) : (
             <select
+              key={`slot-${slotId ?? 'none'}-${cartUnits}`}
               className="flex h-11 w-full cursor-pointer rounded-xl border border-belly-brown/20 bg-white px-4 text-sm"
               value={slotId ?? ''}
               onChange={(e) => setSlotId(e.target.value ? Number(e.target.value) : null)}
@@ -81,15 +85,18 @@ export function SchedulePicker({ cartUnits = 0, compact = false }: SchedulePicke
               {slots.length === 0 && (
                 <option value="">
                   {cartUnits > 0
-                    ? `No slot fits ${cartUnits} items — change date or reduce cart`
+                    ? `No slot fits ${cartUnits} belly order${cartUnits === 1 ? '' : 's'} — change date or reduce cart`
                     : 'No slots — pick another date'}
                 </option>
               )}
-              {slots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label} ({s.available_spots} of {maxUnitsPerSlot} spots left)
-                </option>
-              ))}
+              {slots.map((s) => {
+                const leftForCart = spotsLeftForCart(s.available_spots)
+                return (
+                  <option key={s.id} value={s.id}>
+                    {s.label} ({leftForCart} of {maxUnitsPerSlot} spot{leftForCart === 1 ? '' : 's'} left for your cart)
+                  </option>
+                )
+              })}
             </select>
           )}
         </div>
@@ -97,12 +104,12 @@ export function SchedulePicker({ cartUnits = 0, compact = false }: SchedulePicke
 
       {slotId && !overCapacity && (
         <p className="text-xs font-medium text-belly-green">
-          {availableSpots - cartUnits} spot(s) remaining for this slot.
+          {spotsRemaining} spot{spotsRemaining === 1 ? '' : 's'} remaining for this slot.
         </p>
       )}
       {overCapacity && (
         <p className="text-xs font-medium text-red-600">
-          Your cart ({cartUnits}) exceeds this slot&apos;s remaining capacity ({availableSpots}).
+          Your belly orders ({cartUnits}) exceed this slot&apos;s remaining capacity ({availableSpots}).
           Remove items or choose another time.
         </p>
       )}

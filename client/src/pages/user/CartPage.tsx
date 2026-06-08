@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
 export function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal, itemCount } = useCart()
+  const { items, updateQuantity, removeItem, subtotal, slotUnits } = useCart()
   const { slotId, availableSpots } = useSchedule()
-  const units = itemCount()
-  const canCheckout = Boolean(slotId) && units > 0 && units <= availableSpots
+  const units = slotUnits()
+  const canCheckout = Boolean(slotId) && items.length > 0 && (units === 0 || units <= availableSpots)
 
   if (items.length === 0) {
     return (
@@ -65,9 +65,9 @@ export function CartPage() {
             Proceed to Checkout
           </Button>
         </Link>
-        {!canCheckout && units > 0 && (
+        {!canCheckout && items.length > 0 && units > availableSpots && (
           <p className="mt-2 text-center text-xs text-red-600">
-            Select a time slot with enough spots for your cart ({units} items).
+            Select a time slot with enough spots for your belly orders ({units} belly item{units === 1 ? '' : 's'}).
           </p>
         )}
       </div>

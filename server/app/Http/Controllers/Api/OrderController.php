@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Support\OrderSlotUnits;
 use App\Http\Support\ResolvesSanctumUser;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -56,7 +57,7 @@ class OrderController extends Controller
 
             $total = $subtotal + $deliveryFee;
 
-            $unitsRequested = (int) collect($validated['items'])->sum('quantity');
+            $unitsRequested = OrderSlotUnits::fromResolvedLineItems($lineItems);
             $maxUnits = config('ordering.max_units_per_slot', 4);
 
             $slot = TimeSlot::lockForUpdate()->findOrFail($validated['time_slot_id']);

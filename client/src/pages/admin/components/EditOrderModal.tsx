@@ -4,7 +4,14 @@ import { Plus, Trash2 } from 'lucide-react'
 import { axiosInstance } from '@/lib/axiosInstance'
 import { toast } from '@/lib/toast'
 import { formatPeso } from '@/lib/utils'
-import type { Order, OrderItem, OrderStatus, Product, TimeSlot } from '@/types'
+import type { Order, OrderItem, OrderStatus, TimeSlot } from '@/types'
+import {
+  buildProductOptions,
+  itemToSelection,
+  selectionToPayload,
+  slotUnitsFromLines,
+  type ProductOption,
+} from '@/pages/admin/components/orderFormUtils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,12 +33,6 @@ type LineDraft = {
   quantity: number
 }
 
-type ProductOption = {
-  value: string
-  label: string
-  unitPrice: number
-}
-
 function toDateInputValue(dateString: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return dateString
@@ -43,63 +44,12 @@ function toDateInputValue(dateString: string) {
   return format(d, 'yyyy-MM-dd')
 }
 
-function itemToSelection(item: OrderItem): string {
-  if (item.product_variant_id) {
-    return `v-${item.product_variant_id}`
-  }
-  if (item.product_id) {
-    return `p-${item.product_id}`
-  }
-  return ''
-}
-
 function itemsToLines(items: OrderItem[]): LineDraft[] {
   return items.map((item) => ({
     key: `line-${item.id}`,
     selection: itemToSelection(item),
     quantity: item.quantity,
   }))
-}
-
-function buildProductOptions(products: Product[]): ProductOption[] {
-  const options: ProductOption[] = []
-
-  for (const product of products) {
-    if (!product.is_active) continue
-
-    if (product.category === 'belly') {
-      const variants = product.variants ?? product.active_variants ?? []
-      for (const variant of variants) {
-        if (!variant.is_active) continue
-        options.push({
-          value: `v-${variant.id}`,
-          label: `${product.name} — ${variant.size_label}`,
-          unitPrice: Number(variant.price),
-        })
-      }
-    } else if (product.price != null) {
-      options.push({
-        value: `p-${product.id}`,
-        label: product.name,
-        unitPrice: Number(product.price),
-      })
-    }
-  }
-
-  return options
-}
-
-function selectionToPayload(selection: string, quantity: number) {
-  if (selection.startsWith('v-')) {
-    return {
-      product_variant_id: Number(selection.slice(2)),
-      quantity,
-    }
-  }
-  return {
-    product_id: Number(selection.slice(2)),
-    quantity,
-  }
 }
 
 interface EditOrderModalProps {
@@ -128,13 +78,13 @@ export function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const units = lines.reduce((sum, line) => sum + line.quantity, 0)
-  const deliveryFee = Number(order.delivery_fee)
-
   const optionMap = useMemo(
     () => new Map(productOptions.map((o) => [o.value, o])),
     [productOptions],
   )
+
+  const units = slotUnitsFromLines(lines, optionMap)
+  const deliveryFee = Number(order.delivery_fee)
 
   const previewSubtotal = lines.reduce((sum, line) => {
     const opt = optionMap.get(line.selection)
@@ -195,7 +145,7 @@ export function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps)
 
   const selectedSlot = slots.find((s) => s.id === slotId)
   const availableSpots = selectedSlot?.available_spots ?? 0
-  const slotOverCapacity = status !== 'cancelled' && units > availableSpots
+  const slotOverCapacity = status !== 'cancelled' && units > 0 && units > availableSpots
 
   const addLine = () => {
     const first = productOptions[0]
@@ -377,7 +327,9 @@ export function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps)
                 <span>Total</span>
                 <span className="text-belly-red">{formatPeso(previewTotal)}</span>
               </div>
-              <p className="text-xs text-gray-500">{units} slot spot(s) for this order</p>
+              {units > 0 && (
+                <p className="text-xs text-gray-500">{units} belly slot spot(s) for this order</p>
+              )}
             </div>
           </section>
 
@@ -454,7 +406,7 @@ export function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps)
               )}
               {slotOverCapacity && (
                 <p className="mt-1 text-xs font-medium text-red-600">
-                  Cart uses {units} spots but only {availableSpots} remain in this slot.
+                  Belly orders use {units} spots but only {availableSpots} remain in this slot.
                 </p>
               )}
             </div>

@@ -56,6 +56,7 @@ export interface CartItem {
   sizeLabel?: string
   unitPrice: number
   quantity: number
+  category?: 'belly' | 'addon' | 'drink'
 }
 
 export type OrderStatus =

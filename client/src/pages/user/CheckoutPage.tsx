@@ -34,7 +34,7 @@ export function CheckoutPage() {
 
   const navigate = useNavigate()
 
-  const { items, subtotal, clearCart, itemCount } = useCart()
+  const { items, subtotal, clearCart, slotUnits } = useCart()
 
   const { user } = useAuth()
 
@@ -76,13 +76,13 @@ export function CheckoutPage() {
 
 
 
-  const units = itemCount()
+  const units = slotUnits()
 
   const cartSubtotal = subtotal()
 
   const total = cartSubtotal + (fulfillment === 'delivery' ? deliveryFee : 0)
 
-  const canPlaceOrder = Boolean(slotId) && units > 0 && units <= availableSpots
+  const canPlaceOrder = Boolean(slotId) && items.length > 0 && (units === 0 || units <= availableSpots)
 
 
 
@@ -120,7 +120,7 @@ export function CheckoutPage() {
 
     if (!canPlaceOrder) {
 
-      setError('Your cart exceeds the remaining spots for this time slot.')
+      setError('Your belly orders exceed the remaining spots for this time slot.')
 
       return
 
@@ -364,7 +364,11 @@ export function CheckoutPage() {
 
               <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-belly-red">{formatPeso(total)}</span></div>
 
-              <p className="text-xs text-belly-brown/60">{units} item(s) using {units} slot spot(s)</p>
+              {units > 0 && (
+                <p className="text-xs text-belly-brown/60">
+                  {units} belly order{units === 1 ? '' : 's'} using {units} slot spot{units === 1 ? '' : 's'}
+                </p>
+              )}
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 

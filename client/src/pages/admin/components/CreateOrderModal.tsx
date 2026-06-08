@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
-import { buildProductOptions, selectionToPayload, type ProductOption } from '@/pages/admin/components/orderFormUtils'
+import { buildProductOptions, selectionToPayload, slotUnitsFromLines, type ProductOption } from '@/pages/admin/components/orderFormUtils'
 
 type LineDraft = {
   key: string
@@ -43,7 +43,7 @@ export function CreateOrderModal({ onClose, onCreated }: CreateOrderModalProps) 
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const units = lines.reduce((sum, line) => sum + line.quantity, 0)
+  const units = slotUnitsFromLines(lines, optionMap)
   const deliveryFee = fulfillment === 'delivery' ? deliveryFeeDefault : 0
 
   const optionMap = useMemo(
@@ -73,7 +73,7 @@ export function CreateOrderModal({ onClose, onCreated }: CreateOrderModalProps) 
   }, [])
 
   useEffect(() => {
-    if (units < 1) {
+    if (lines.length < 1) {
       setSlots([])
       setSlotId(null)
       return
@@ -81,7 +81,11 @@ export function CreateOrderModal({ onClose, onCreated }: CreateOrderModalProps) 
     setLoadingSlots(true)
     axiosInstance
       .get('/time-slots/available', {
-        params: { date: scheduledDate, type: fulfillment, units_needed: units },
+        params: {
+          date: scheduledDate,
+          type: fulfillment,
+          ...(units > 0 ? { units_needed: units } : {}),
+        },
       })
       .then(({ data }) => {
         const available: TimeSlot[] = data.slots ?? []
@@ -89,11 +93,11 @@ export function CreateOrderModal({ onClose, onCreated }: CreateOrderModalProps) 
         setSlotId(available[0]?.id ?? null)
       })
       .finally(() => setLoadingSlots(false))
-  }, [scheduledDate, fulfillment, units])
+  }, [scheduledDate, fulfillment, units, lines.length])
 
   const selectedSlot = slots.find((s) => s.id === slotId)
   const availableSpots = selectedSlot?.available_spots ?? 0
-  const slotOverCapacity = units > availableSpots
+  const slotOverCapacity = units > 0 && units > availableSpots
 
   const addLine = () => {
     const first = productOptions[0]

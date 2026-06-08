@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Support\OrderSlotUnits;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -83,7 +84,7 @@ class OrderAdminController extends Controller
                 $subtotal += $line['line_total'];
             }
 
-            $unitsRequested = (int) collect($validated['items'])->sum('quantity');
+            $unitsRequested = OrderSlotUnits::fromResolvedLineItems($lineItems);
             $deliveryFee = $validated['fulfillment_type'] === 'delivery'
                 ? (float) ($validated['delivery_fee'] ?? config('ordering.delivery_fee', 150))
                 : 0;
@@ -145,7 +146,7 @@ class OrderAdminController extends Controller
             $order->update($validated);
 
             if ($order->time_slot_id && $previousStatus !== 'cancelled' && $newStatus === 'cancelled') {
-                $units = (int) $order->items()->sum('quantity');
+                $units = OrderSlotUnits::fromOrderItems($order->items);
                 if ($units > 0) {
                     TimeSlot::where('id', $order->time_slot_id)
                         ->where('booked_count', '>=', $units)
@@ -178,7 +179,7 @@ class OrderAdminController extends Controller
         ]);
 
         DB::transaction(function () use ($order, $validated) {
-            $oldUnits = (int) $order->items()->sum('quantity');
+            $oldUnits = OrderSlotUnits::fromOrderItems($order->items);
             $lineItems = null;
             $subtotal = null;
 
@@ -200,7 +201,7 @@ class OrderAdminController extends Controller
             }
 
             $newUnits = $lineItems
-                ? (int) array_sum(array_column($lineItems, 'quantity'))
+                ? OrderSlotUnits::fromResolvedLineItems($lineItems)
                 : $oldUnits;
 
             $oldStatus = $order->status;

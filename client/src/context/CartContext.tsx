@@ -10,6 +10,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useSchedule } from '@/context/ScheduleContext'
 import { loadCartItems, saveCartItems } from '@/lib/storage'
+import { cartItemUsesSlot, slotUnitsFromCartItems } from '@/lib/cartUtils'
 import { toast } from '@/lib/toast'
 import type { CartItem } from '@/types'
 
@@ -21,6 +22,7 @@ interface CartContextValue {
   clearCart: () => void
   subtotal: () => number
   itemCount: () => number
+  slotUnits: () => number
   isAdding: boolean
 }
 
@@ -40,10 +42,8 @@ function CartProviderInner({ children }: { children: ReactNode }) {
   }, [items])
 
   useEffect(() => {
-    const units = items.reduce((sum, i) => sum + i.quantity, 0)
-    if (units > 0) {
-      schedule.refreshSlots(units)
-    }
+    const units = slotUnitsFromCartItems(items)
+    void schedule.refreshSlots(units > 0 ? units : undefined)
   }, [items, schedule.refreshSlots])
 
   useEffect(() => {
@@ -56,6 +56,8 @@ function CartProviderInner({ children }: { children: ReactNode }) {
     const list = Array.isArray(items) ? items : []
     return list.reduce((sum, i) => sum + i.quantity, 0)
   }, [items])
+
+  const slotUnits = useCallback(() => slotUnitsFromCartItems(items), [items])
 
   const addItem = useCallback(
     (item: Omit<CartItem, 'key' | 'quantity'> & { quantity?: number }): boolean => {
@@ -73,17 +75,21 @@ function CartProviderInner({ children }: { children: ReactNode }) {
       const key = item.variantId ? `v-${item.variantId}` : `p-${item.productId}`
       const list = Array.isArray(items) ? items : []
       const existing = list.find((i) => i.key === key)
-      const otherUnits = list
-        .filter((i) => i.key !== key)
-        .reduce((sum, i) => sum + i.quantity, 0)
-      const newTotal = otherUnits + (existing ? existing.quantity + addQty : addQty)
+      const usesSlot = cartItemUsesSlot({ ...item, key, quantity: addQty })
 
-      if (newTotal > schedule.availableSpots) {
-        toast.error(
-          'Not enough spots left',
-          `This time slot only has ${schedule.availableSpots} spot(s) left (max ${schedule.maxUnitsPerSlot}).`,
-        )
-        return false
+      if (usesSlot) {
+        const otherSlotUnits = list
+          .filter((i) => i.key !== key && cartItemUsesSlot(i))
+          .reduce((sum, i) => sum + i.quantity, 0)
+        const newSlotTotal = otherSlotUnits + (existing ? existing.quantity + addQty : addQty)
+
+        if (newSlotTotal > schedule.availableSpots) {
+          toast.error(
+            'Not enough spots left',
+            `This time slot only has ${schedule.availableSpots} spot(s) left (max ${schedule.maxUnitsPerSlot}).`,
+          )
+          return false
+        }
       }
 
       setIsAdding(true)
@@ -114,16 +120,21 @@ function CartProviderInner({ children }: { children: ReactNode }) {
       }
 
       const list = Array.isArray(items) ? items : []
-      const otherUnits = list
-        .filter((i) => i.key !== key)
-        .reduce((sum, i) => sum + i.quantity, 0)
+      const target = list.find((i) => i.key === key)
+      if (!target) return
 
-      if (otherUnits + quantity > schedule.availableSpots) {
-        toast.error(
-          'Not enough spots left',
-          `This time slot only has ${schedule.availableSpots} spot(s) left (max ${schedule.maxUnitsPerSlot}).`,
-        )
-        return
+      if (cartItemUsesSlot(target)) {
+        const otherSlotUnits = list
+          .filter((i) => i.key !== key && cartItemUsesSlot(i))
+          .reduce((sum, i) => sum + i.quantity, 0)
+
+        if (otherSlotUnits + quantity > schedule.availableSpots) {
+          toast.error(
+            'Not enough spots left',
+            `This time slot only has ${schedule.availableSpots} spot(s) left (max ${schedule.maxUnitsPerSlot}).`,
+          )
+          return
+        }
       }
 
       setItems((prev) =>
@@ -158,9 +169,10 @@ function CartProviderInner({ children }: { children: ReactNode }) {
       clearCart,
       subtotal,
       itemCount,
+      slotUnits,
       isAdding,
     }),
-    [items, addItem, updateQuantity, removeItem, clearCart, subtotal, itemCount, isAdding],
+    [items, addItem, updateQuantity, removeItem, clearCart, subtotal, itemCount, slotUnits, isAdding],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
